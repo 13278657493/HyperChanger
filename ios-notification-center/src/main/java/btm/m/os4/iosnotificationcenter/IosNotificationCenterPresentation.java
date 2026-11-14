@@ -179,13 +179,14 @@ public final class IosNotificationCenterPresentation {
     private IosNotificationCenterPresentation() {}
 
     public static void attach(ViewGroup root) {
-        IosNotificationPresentationBridge.attach(BRIDGE_HOST);
         if (window == root) {
+            IosNotificationPresentationBridge.attach(BRIDGE_HOST);
             syncClearButton();
             return;
         }
         release();
         window = root;
+        IosNotificationPresentationBridge.attach(BRIDGE_HOST);
         clearButtonScanNeeded = true;
         if (root != null) {
             clearObserver = root.getViewTreeObserver();
