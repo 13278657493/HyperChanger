@@ -197,6 +197,11 @@ public final class IosNotificationCenterPresentation {
         syncClearButton();
     }
 
+    /** Detach only the window instance that this presentation currently owns. */
+    public static void detachWindow(ViewGroup root) {
+        if (root != null && window == root) release();
+    }
+
     public static void update(float fraction, float layoutFraction, boolean enabled, View sheet) {
         if (!IosShadeGestureHooks.controller().isEnabled()) {
             onFeatureDisabled();
