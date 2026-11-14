@@ -196,3 +196,10 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - 当前 Presentation 创建路径仍依赖 MIUI SystemUI 内部 View/资源 ID 和锁屏时钟组件；实际 ROM 兼容性由用户真机验证。
 
 本阶段完成代码接线和静态旧包引用检查；尚未执行 Gradle 构建，不能据此认定 APK 已可安装。
+
+
+### Presentation 生命周期补充
+
+- `IosNotificationPresentationHooks` 现在还观察 `KeyguardStateControllerImpl.notifyKeyguardState` 与 `KeyguardUpdateMonitor.setKeyguardShowing`，并把锁屏状态交给 Presentation。
+- `IosShadeGestureHooks` 已把原生展开进度、切换进度和面板归属更新传给 Presentation 的 `update/setSwitching`。
+- 当前独立 Presentation 会在捕获到 `NotificationShadeWindowView` 后注册 Bridge Host；未创建成功时 Bridge 的 active/ownership 条件仍为 false。
