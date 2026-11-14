@@ -733,7 +733,6 @@ public final class IosNotificationCenterPresentation {
             container.setFocusableInTouchMode(false);
             container.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
             allowBackdropSampling(container);
-            allowBackdropSampling(nativeClock);
             nativeClock.setClickable(false);
             nativeClock.setFocusable(false);
             nativeClock.setFocusableInTouchMode(false);
