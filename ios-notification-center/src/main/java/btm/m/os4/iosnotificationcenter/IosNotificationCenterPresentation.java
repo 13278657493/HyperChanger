@@ -260,21 +260,28 @@ public final class IosNotificationCenterPresentation {
     }
 
     public static void release() {
-        IosNotificationPresentationBridge.detach(BRIDGE_HOST);
+        cleanupStep("detach presentation bridge", () -> IosNotificationPresentationBridge.detach(BRIDGE_HOST));
         switching = false;
         gestureActive = false;
-        if (headerExitAnimator != null) headerExitAnimator.cancel();
+        if (headerExitAnimator != null) {
+            ValueAnimator animation = headerExitAnimator;
+            headerExitAnimator = null;
+            cleanupStep("cancel header exit animation", animation::cancel);
+        }
         if (notificationHeaderVisibilityAnimator != null) {
-            notificationHeaderVisibilityAnimator.cancel();
+            ValueAnimator animation = notificationHeaderVisibilityAnimator;
             notificationHeaderVisibilityAnimator = null;
+            cleanupStep("cancel notification header animation", animation::cancel);
         }
-        if (clearObserver != null && clearObserver.isAlive()) {
-            clearObserver.removeOnPreDrawListener(CLEAR_SYNC);
-            clearObserver.removeOnGlobalLayoutListener(CLEAR_LAYOUT);
-        }
+        cleanupStep("remove clear-button pre-draw observer", () -> {
+            if (clearObserver != null && clearObserver.isAlive()) clearObserver.removeOnPreDrawListener(CLEAR_SYNC);
+        });
+        cleanupStep("remove clear-button layout observer", () -> {
+            if (clearObserver != null && clearObserver.isAlive()) clearObserver.removeOnGlobalLayoutListener(CLEAR_LAYOUT);
+        });
         clearObserver = null;
-        releasePresentation();
-        restoreNativeClearButtons();
+        cleanupStep("release presentation", IosNotificationCenterPresentation::releasePresentation);
+        cleanupStep("restore native clear buttons", IosNotificationCenterPresentation::restoreNativeClearButtons);
         capturedStack = null;
         capturedHeader = null;
         RESOURCE_IDS.clear();
