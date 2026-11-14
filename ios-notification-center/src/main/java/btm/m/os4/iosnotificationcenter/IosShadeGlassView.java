@@ -208,13 +208,21 @@ public final class IosShadeGlassView extends View {
     }
 
     public void reset() {
+        // Stop asynchronous sampling before clearing the host geometry. A reused glass
+        // view must begin from a neutral visual state, not the previous gesture's fade.
         liquidLens.reset();
-        if (active || ready || failed) releaseNative();
+        if (active || ready || failed || materialReady) releaseNative();
         active = ready = failed = exiting = false;
         root = null;
+        sheetOffset = 0f;
+        radius = 0f;
         clipWidth = clipHeight = 0;
+        super.setAlpha(1f);
+        backdrop.setAlpha(1f);
         setVisibility(INVISIBLE);
         backdrop.setVisibility(INVISIBLE);
+        invalidateOutline();
+        invalidate();
     }
 
     @Override protected void onDetachedFromWindow() {
