@@ -335,3 +335,11 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - Native SystemUI methods are always allowed to complete first; post-call shade state extraction and presentation attachment/capture are wrapped independently so an OEM field rename, null animator, overload change, or lifecycle race cannot turn a successful native call into an observer-thrown crash.
 - The shade switch observer validates the reflected progress and switching values before updating module state. Control-center, notification-panel, keyguard, window, stack, and header observers validate optional arguments/receiver types and log failures without propagating them into SystemUI.
 - This is defensive runtime isolation, not proof that the MIUI/HyperOS private member names match a specific firmware build; target-device validation remains necessary.
+
+
+## Notification row snapshot and draw-path hardening
+
+- Exit-frame capture now traverses attached group children with an identity-based visited set. This prevents duplicate snapshots and protects against malformed/cyclic OEM child graphs without retaining rows through strong map values.
+- The stack `dispatchDraw` and `drawChild` observers now isolate optional row normalization, exit snapshot restoration, frame capture, and mask generation. If mask generation fails, stale masks are cleared and native drawing continues; the original drawing call is not skipped because an optional observer failed.
+- The explicit entry deferral path still intentionally skips one frame only when the entry-state component confirms that a pre-draw handoff is pending. If the deferral observer itself fails, native drawing proceeds.
+- These guards reduce crash propagation but do not validate the private MIUI row APIs or the visual result on the target firmware.
