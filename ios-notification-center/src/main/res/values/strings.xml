@@ -2,5 +2,5 @@
 <resources>
     <string name="app_name">iOS 风格通知中心</string>
     <string name="xposed_description">独立的 iOS 风格通知中心 LSPosed 模块</string>
-    <string name="scaffold_status">独立模块骨架已建立。通知中心 Hook 尚未启用；完成依赖拆分和编译验证后再开放开关。</string>
+    <string name="scaffold_status">独立通知中心模块已启用 SystemUI 生命周期与通知面板观察。Presentation 会在系统通知窗口创建后接入；当前仍处于开发阶段，尚未完成编译验证。</string>
 </resources>
