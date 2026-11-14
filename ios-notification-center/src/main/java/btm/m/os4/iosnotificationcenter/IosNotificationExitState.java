@@ -8,6 +8,9 @@ import android.view.ViewGroup;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
 import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
 
@@ -44,22 +47,32 @@ final class IosNotificationExitState {
                 || !(stack instanceof ViewGroup)) return;
         DRAWN.clear();
         ViewGroup group = (ViewGroup) stack;
-        for (int i = 0; i < group.getChildCount(); i++) rememberRow(group.getChildAt(i));
+        // OEM group rows expose attached children through a second traversal path. Track
+        // identity, not equals(), so a row/background is captured at most once per frame
+        // and a malformed vendor child graph cannot recurse indefinitely.
+        Set<View> visited = Collections.newSetFromMap(new IdentityHashMap<View, Boolean>());
+        for (int i = 0; i < group.getChildCount(); i++) {
+            rememberRow(group.getChildAt(i), visited);
+        }
     }
 
-    private static void rememberRow(View row) {
-        if (!IosNotificationStackHooks.isNotificationRow(row) || row.getVisibility() == View.GONE) return;
+    private static void rememberRow(View row, Set<View> visited) {
+        if (row == null || !visited.add(row)
+                || !IosNotificationStackHooks.isNotificationRow(row)
+                || row.getVisibility() == View.GONE) return;
         remember(row, true, row);
         try {
             Object injector = Xp.callMethod(row, "getInjector");
             Object background = Xp.callMethod(injector, "getBackgroundNormal");
-            if (background instanceof View) remember((View) background, false, row);
+            if (background instanceof View && visited.add((View) background)) {
+                remember((View) background, false, row);
+            }
         } catch (Throwable ignored) {}
         try {
             Object children = Xp.callMethod(row, "getAttachedChildren");
             if (children instanceof List<?>) {
                 for (Object child : (List<?>) children) {
-                    if (child instanceof View) rememberRow((View) child);
+                    if (child instanceof View) rememberRow((View) child, visited);
                 }
             }
         } catch (Throwable ignored) {}
