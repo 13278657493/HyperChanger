@@ -16,7 +16,8 @@ final class IosNotificationAnimationHooks {
         // reports a non-zero height. Use the takeover predicate here so that animation is
         // suppressed before it can queue, while the normal enabled predicate remains the
         // runtime guard for already-open frames.
-        if (!IosShadeController.isNotificationPanelIntercepting()
+        if (!IosNotificationPresentationBridge.isActive()
+                || !IosShadeGestureHooks.controller().isNotificationPanelIntercepting()
                 || !IosNotificationEntryState.ownsPanelMotion()) return false;
         try {
             Object ambient = Xp.getObjectField(owner, "ambientState");
