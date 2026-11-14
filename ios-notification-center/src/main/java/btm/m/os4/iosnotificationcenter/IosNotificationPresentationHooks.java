@@ -55,6 +55,33 @@ public final class IosNotificationPresentationHooks {
         } catch (Throwable error) {
             Xp.log("[IOSNotificationCenter] notification header capture unavailable: " + error);
         }
+        try {
+            Class<?> keyguard = Xp.findClass(
+                    "com.android.systemui.statusbar.policy.KeyguardStateControllerImpl", loader);
+            Xp.hookAll(keyguard, "notifyKeyguardState", chain -> {
+                Object result = chain.proceed();
+                if (!chain.getArgs().isEmpty() && chain.getArgs().get(0) instanceof Boolean) {
+                    IosNotificationCenterPresentation.onKeyguardStateChanged(
+                            (Boolean) chain.getArgs().get(0));
+                }
+                return result;
+            });
+        } catch (Throwable error) {
+            Xp.log("[IOSNotificationCenter] keyguard controller observer unavailable: " + error);
+        }
+        try {
+            Class<?> monitor = Xp.findClass("com.android.keyguard.KeyguardUpdateMonitor", loader);
+            Xp.hookAll(monitor, "setKeyguardShowing", chain -> {
+                Object result = chain.proceed();
+                if (!chain.getArgs().isEmpty() && chain.getArgs().get(0) instanceof Boolean) {
+                    IosNotificationCenterPresentation.onKeyguardStateChanged(
+                            (Boolean) chain.getArgs().get(0));
+                }
+                return result;
+            });
+        } catch (Throwable error) {
+            Xp.log("[IOSNotificationCenter] keyguard monitor observer unavailable: " + error);
+        }
         installed = true;
     }
 }
