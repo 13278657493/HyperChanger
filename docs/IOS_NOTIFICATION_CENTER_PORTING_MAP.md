@@ -307,3 +307,10 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 
 - Exit restoration resolves the weak owner-row reference once into a local strong reference before checking Bridge ownership. This avoids two separate weak-reference reads producing inconsistent results if collection occurs between reads.
 - The temporary strong reference exists only for the duration of that restore call; snapshot values continue to avoid retaining rows for the lifetime of the weak-key map.
+
+
+## libxposed API 102 entry class loader
+
+- `XposedModule.onPackageLoaded` receives `PackageLoadedParam`, whose API 102 class-loader accessor is `getDefaultClassLoader()`.
+- `getClassLoader()` belongs to `PackageReadyParam`; calling it from `onPackageLoaded` does not compile against API 102. The standalone module entry now uses `param.getDefaultClassLoader()` before installing SystemUI hooks.
+- The entry class remains a public no-argument `XposedModule` subclass, matching the API's module-entry contract.
