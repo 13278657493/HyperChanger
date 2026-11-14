@@ -343,3 +343,10 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - The stack `dispatchDraw` and `drawChild` observers now isolate optional row normalization, exit snapshot restoration, frame capture, and mask generation. If mask generation fails, stale masks are cleared and native drawing continues; the original drawing call is not skipped because an optional observer failed.
 - The explicit entry deferral path still intentionally skips one frame only when the entry-state component confirms that a pre-draw handoff is pending. If the deferral observer itself fails, native drawing proceeds.
 - These guards reduce crash propagation but do not validate the private MIUI row APIs or the visual result on the target firmware.
+
+
+## Notification exit/entry lifecycle follow-up
+
+- Exit snapshots are now restored only while both the owning notification row and captured view remain attached to the window. A detached row awaiting OEM removal/recycling is no longer eligible for a stale visual restore.
+- Entry-state traversal now uses a per-pass identity visited set for attached group children, matching exit snapshot traversal and preventing duplicate processing or recursive loops in OEM-provided child graphs.
+- Real removal/dismissal checks remain in place; these attachment checks are an additional lifecycle boundary, not a replacement for OEM removal state.
