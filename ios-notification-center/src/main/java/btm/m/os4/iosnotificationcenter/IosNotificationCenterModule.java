@@ -21,5 +21,6 @@ public final class IosNotificationCenterModule extends XposedModule {
         // bridge remains detached, so OEM notification rendering is still left untouched.
         IosShadeGestureHooks.install(param.getClassLoader());
         IosNotificationStackHooks.install(param.getClassLoader());
+        IosNotificationPresentationHooks.install(param.getClassLoader());
     }
 }
