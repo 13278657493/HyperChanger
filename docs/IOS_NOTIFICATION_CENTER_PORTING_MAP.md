@@ -275,3 +275,10 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - Optional blur, material, and clear-gesture observers are initialized independently. A missing OEM class or hidden API now logs its own failure without aborting the core shade gesture observers.
 - The module entry point also isolates the gesture, notification-stack, and presentation-lifecycle hook families. A failure in one family no longer prevents the other families from attempting installation.
 - This is a startup resilience improvement; successful installation on a specific HyperOS build still requires device-side LSPosed logs.
+
+## Core observer activation gate
+
+- The shade controller is no longer marked enabled before native hook registration is attempted.
+- Expansion, panel-switch, and panel-ownership observer groups report independent installation outcomes.
+- The feature becomes active only if at least one core native state observer was registered; otherwise presentation updates remain gated and the native UI is restored instead of being claimed by an inert controller.
+- A consolidated status log records which observer groups installed. Optional blur/material/clear hooks do not count as core state sources.
