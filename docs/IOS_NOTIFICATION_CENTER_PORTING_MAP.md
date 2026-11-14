@@ -243,3 +243,11 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - The OEM KeyguardClockContainer is no longer modified by an early untracked containment setter during presentation creation.
 - IosShadeMaterial now disables clock wallpaper containment only when both setter and getter are available, snapshots the original value first, and restores it with the other captured material properties during teardown.
 - On builds exposing the setter without a getter, the controller deliberately leaves the clock's native containment unchanged rather than risk a persistent SystemUI modification.
+
+
+## Optional OEM clock fallback
+
+- Presentation creation no longer fails solely because `KeyguardClockContainer` is absent, fails to inflate, or contains no clock content.
+- The independent notification host and stack integration can still attach, while the native SystemUI header remains visible as the date/status fallback.
+- Clock-specific synchronization is skipped when no hosted clock exists; landscape layout does not reserve an empty clock column.
+- When a compatible clock is available, the existing hosted-clock path and material registration remain unchanged.
