@@ -1863,8 +1863,13 @@ public final class IosNotificationCenterPresentation {
     }
 
     private static void releasePresentation() {
-        // Restore every captured MIUI material and the original window blur before
-        // removing our overlay, including interrupted gestures and feature disable.
+        // This method is the terminal boundary for a presentation instance (normal close,
+        // feature disable, window replacement, or failed host creation). Reset gesture
+        // ownership before restoring views so a later attach cannot inherit stale progress.
+        progress = 0f;
+        layoutProgress = 0f;
+        switching = false;
+        gestureActive = false;
         IosShadeMaterial.setActive(false, null);
         IosShadeBackdropBlur.release();
         IosNotificationEntryState.clear();
