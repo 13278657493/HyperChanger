@@ -99,7 +99,11 @@ final class IosNotificationExitState {
         if (card == null || view == null || view.getVisibility() == View.GONE) return;
         // Resolve the weak owner once so it cannot disappear between validation steps.
         View ownerRow = card.ownerRow.get();
-        if (ownerRow == null || !IosNotificationPresentationBridge.ownsRow(ownerRow)) return;
+        // A dismissed row can remain strongly reachable for a short time after removal.
+        // Never replay its last frame into a detached/recycled view during that interval.
+        if (ownerRow == null || !ownerRow.isAttachedToWindow()
+                || !view.isAttachedToWindow()
+                || !IosNotificationPresentationBridge.ownsRow(ownerRow)) return;
         try {
             // Keep real removals/dismissals under OEM control, even during an exit.
             if (card.expandable && Boolean.TRUE.equals(Xp.callMethod(view, "isRemoved"))) return;
