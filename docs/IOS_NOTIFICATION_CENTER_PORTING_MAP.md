@@ -263,3 +263,9 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - `IosShadeGlassView.reset()` now stops the optical sampler, releases any remaining native material state, and clears the previous root, sheet offset, corner radius, and clip dimensions.
 - The glass and its backdrop return to alpha 1 before being hidden, so a later attachment cannot inherit a partially faded state from a previous wallpaper gesture.
 - This is lifecycle hardening only; it does not mount a glass overlay or claim that the target ROM's optical APIs have been verified.
+
+## Standalone APK metadata packaging
+
+- The standalone module packages its libxposed registration files from `src/main/resources/META-INF/xposed/`: `java_init.list`, `module.prop`, and `scope.list`.
+- Removed the catch-all resource exclusion from the standalone module's Gradle packaging block. Keeping only the Xposed metadata merge rule avoids excluding the very files required for module entry registration and scope discovery.
+- The APK still needs a real Gradle build and archive inspection before packaging can be considered verified.
