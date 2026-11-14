@@ -322,3 +322,9 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - `java_init.list` points to the public no-argument `IosNotificationCenterModule`, and the static scope is limited to `com.android.systemui`.
 - `module.prop` is kept to the documented core keys (`minApiVersion`, `targetApiVersion`, `staticScope`, and `autoHotReload`). The user-facing description remains in the Android manifest rather than an extra, undocumented property.
 - The module uses `compileOnly` for libxposed API 102 and does not require the optional libxposed service dependency for its current hook-only implementation.
+
+
+## libxposed minimum framework compatibility
+
+- The module targets API 102 but declares API 101 as its minimum framework API, matching the official libxposed example's compatibility convention.
+- The current implementation uses the standard module lifecycle and hook-chain APIs and does not rely on API-102-only hot-reload callbacks or hook-handle replacement. Keeping `minApiVersion=101` avoids unnecessarily excluding compatible API 101 frameworks while `targetApiVersion=102` remains explicit.
