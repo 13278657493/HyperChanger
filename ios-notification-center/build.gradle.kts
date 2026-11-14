@@ -21,8 +21,9 @@ android {
 
     packaging {
         resources {
+            // Keep libxposed registration metadata in the APK. Excluding "**" here
+            // would also remove java_init.list, module.prop, and scope.list.
             merges += "META-INF/xposed/*"
-            excludes += "**"
         }
     }
 }
