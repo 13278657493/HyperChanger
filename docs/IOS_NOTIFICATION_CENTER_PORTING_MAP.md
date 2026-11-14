@@ -203,3 +203,13 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - `IosNotificationPresentationHooks` 现在还观察 `KeyguardStateControllerImpl.notifyKeyguardState` 与 `KeyguardUpdateMonitor.setKeyguardShowing`，并把锁屏状态交给 Presentation。
 - `IosShadeGestureHooks` 已把原生展开进度、切换进度和面板归属更新传给 Presentation 的 `update/setSwitching`。
 - 当前独立 Presentation 会在捕获到 `NotificationShadeWindowView` 后注册 Bridge Host；未创建成功时 Bridge 的 active/ownership 条件仍为 false。
+
+
+### 本轮生命周期健壮性修正
+
+- 修复 Presentation 更换通知窗口时 Bridge Host 被紧接着的 `release()` 一并 detach 的顺序问题：现在先释放旧窗口，再注册新窗口 Host。
+- 为 `NotificationShadeWindowView` 的继承 `onDetachedFromWindow` 使用父类方法查找后单独挂钩，避免因 OEM 子类未声明该方法而中断窗口捕获 Hook 安装。
+- 窗口 detach 时只释放当前持有的 root，并清除旧 stack/header View 引用，防止跨窗口复用过期 View。
+- 修正模块入口注释与 APK 首页状态文案，避免仍显示“Hook 尚未启用”的过期脚手架提示。
+
+这些属于代码级生命周期修复；仍未有 GitHub Actions 构建运行记录，尚不能视为编译通过。
