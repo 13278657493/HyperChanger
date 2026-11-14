@@ -86,3 +86,18 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 独立模块入口现在会在 SystemUI 加载时安装该观察器。观察结果只写入新建的 `IosShadeController`，没有调用旧 `ShadeLayer`，也不会改变原生通知面板的可见性、触摸、动画或壁纸。
 
 这是有意设置的安全边界：当前只验证独立模块的 hook 接入路径；通知中心视觉呈现层尚未迁移，因此没有启用 UI 接管。设备上的类名/方法签名仍需目标 ROM 验证，当前没有编译或真机验证结果。
+
+
+## 第五阶段：独立玻璃视觉基元（已建立，尚未挂载）
+
+新增：
+
+- `IosNotificationGlassView.java`：独立圆角玻璃 View，优先尝试 MIUI 原生玻璃材质 API；API 不可用时退回半透明填充和描边。
+- `IosNotificationGlassHost.java`：接收调用方测量好的父容器与局部坐标矩形，负责把玻璃 View 放在子视图底层并管理销毁。
+
+安全约束：
+
+- Glass View 不可点击、不获取焦点、不拦截触摸。
+- Host 不自行猜测通知面板的位置和尺寸；必须由后续适配层提供测量后的 bounds。
+- 该组件尚未接入通知面板布局，也没有启用视觉接管；当前只是独立视觉基元。
+- MIUI 原生材质方法和参数需要在小米 17 Pro Max 目标 ROM 上验证，不能据此认定模糊效果已经生效。
