@@ -10,6 +10,7 @@ public final class IosNotificationPresentationBridge {
     public interface Host {
         boolean isActive();
         default void syncShortcuts() {}
+        default boolean isKeyguardLocked() { return false; }
         boolean ownsStack(View view);
         boolean ownsRow(View view);
         float viewportBottom(View view);
@@ -26,6 +27,7 @@ public final class IosNotificationPresentationBridge {
     public static void attach(Host value) { host = value; }
     public static void detach(Host value) { if (host == value) host = null; }
 
+    public static boolean isKeyguardLocked() { Host h = host; return h != null && h.isKeyguardLocked(); }
     public static void syncShortcuts() { Host h = host; if (h != null) h.syncShortcuts(); }
     public static boolean isActive() { Host h = host; return h != null && h.isActive(); }
     public static boolean ownsStack(View v) { Host h = host; return h != null && h.ownsStack(v); }
