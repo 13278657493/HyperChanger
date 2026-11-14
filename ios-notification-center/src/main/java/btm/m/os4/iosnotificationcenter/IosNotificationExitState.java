@@ -48,11 +48,11 @@ final class IosNotificationExitState {
 
     private static void rememberRow(View row) {
         if (!IosNotificationStackHooks.isNotificationRow(row) || row.getVisibility() == View.GONE) return;
-        remember(row, true);
+        remember(row, true, row);
         try {
             Object injector = Xp.callMethod(row, "getInjector");
             Object background = Xp.callMethod(injector, "getBackgroundNormal");
-            if (background instanceof View) remember((View) background, false);
+            if (background instanceof View) remember((View) background, false, row);
         } catch (Throwable ignored) {}
         try {
             Object children = Xp.callMethod(row, "getAttachedChildren");
@@ -64,8 +64,8 @@ final class IosNotificationExitState {
         } catch (Throwable ignored) {}
     }
 
-    private static void remember(View view, boolean expandable) {
-        try { DRAWN.put(view, new Card(view, expandable)); }
+    private static void remember(View view, boolean expandable, View ownerRow) {
+        try { DRAWN.put(view, new Card(view, expandable, ownerRow)); }
         catch (Throwable ignored) { /* Older OEM row types keep their native rendering. */ }
     }
 
@@ -83,7 +83,8 @@ final class IosNotificationExitState {
 
     private static void restore(View view, Card card) {
         if (card == null || view == null || view.getVisibility() == View.GONE
-                || !IosNotificationPresentationBridge.ownsRow(view)) return;
+                || card.ownerRow == null
+                || !IosNotificationPresentationBridge.ownsRow(card.ownerRow)) return;
         try {
             // Keep real removals/dismissals under OEM control, even during an exit.
             if (card.expandable && Boolean.TRUE.equals(Xp.callMethod(view, "isRemoved"))) return;
@@ -113,12 +114,14 @@ final class IosNotificationExitState {
 
     private static final class Card {
         final boolean expandable;
+        final View ownerRow;
         final int visibility, height, clipTop, clipBottom, extClipBottom, dimAlpha;
         final float x, y, z, sx, sy, alpha, transitionAlpha, pivotX, pivotY;
         final Rect bounds;
 
-        Card(View view, boolean expandable) {
+        Card(View view, boolean expandable, View ownerRow) {
             this.expandable = expandable;
+            this.ownerRow = ownerRow;
             visibility = view.getVisibility();
             x = value(view, "getSuperTranslationX");
             y = value(view, "getSuperTranslationY");
