@@ -19,8 +19,23 @@ public final class IosNotificationCenterModule extends XposedModule {
 
         // Observe native shade state, notification rows, and the native window lifecycle.
         // The presentation bridge is attached only after the shade window is captured.
-        IosShadeGestureHooks.install(param.getClassLoader());
-        IosNotificationStackHooks.install(param.getClassLoader());
-        IosNotificationPresentationHooks.install(param.getClassLoader());
+        // Keep each hook family independent: one OEM class/API mismatch must not prevent
+        // the remaining notification-center observers from loading in SystemUI.
+        ClassLoader loader = param.getClassLoader();
+        try {
+            IosShadeGestureHooks.install(loader);
+        } catch (Throwable error) {
+            Xp.log("[IOSNotificationCenter] shade gesture hooks failed to initialize: " + error);
+        }
+        try {
+            IosNotificationStackHooks.install(loader);
+        } catch (Throwable error) {
+            Xp.log("[IOSNotificationCenter] notification stack hooks failed to initialize: " + error);
+        }
+        try {
+            IosNotificationPresentationHooks.install(loader);
+        } catch (Throwable error) {
+            Xp.log("[IOSNotificationCenter] presentation lifecycle hooks failed to initialize: " + error);
+        }
     }
 }
