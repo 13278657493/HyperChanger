@@ -73,3 +73,16 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - `IosShadeBlurEffects.java`：独立的 RenderEffect 模糊半径缓存，不引用旧包。
 
 注意：这批代码目前是独立模块内的基础层，尚未接入 SystemUI hooks，也尚未完成 Gradle 编译。旧模块的 ShadeLayer 与原始通知中心逻辑保持不变。下一步应把通知中心 hooks 的状态回调逐步改为调用新 controller，再迁移视图/壁纸呈现层。
+
+
+## 第四阶段：独立原生手势观察器（已接入，暂不接管 UI）
+
+新增 `IosShadeGestureHooks.java`，仅在独立模块中观察以下 MIUI/SystemUI 回调：
+
+- `NotificationPanelExpandController.notifyExpandHeightChanged`：读取原生通知面板高度、阈值和拖动状态。
+- `ShadeSwitchControllerImpl.performProgressChanged/setSwitching`：读取通知与控制中心切换进度。
+- `NotificationPanelViewControllerInjector.onControlCenterAppearChanged/onNotificationAppearChanged`：跟踪当前面板归属。
+
+独立模块入口现在会在 SystemUI 加载时安装该观察器。观察结果只写入新建的 `IosShadeController`，没有调用旧 `ShadeLayer`，也不会改变原生通知面板的可见性、触摸、动画或壁纸。
+
+这是有意设置的安全边界：当前只验证独立模块的 hook 接入路径；通知中心视觉呈现层尚未迁移，因此没有启用 UI 接管。设备上的类名/方法签名仍需目标 ROM 验证，当前没有编译或真机验证结果。
