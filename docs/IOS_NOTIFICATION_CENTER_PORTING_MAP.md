@@ -357,3 +357,11 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - `releasePresentation()` is the terminal boundary for normal close, feature disable, window replacement, and failed host creation. It now resets panel progress, layout progress, switching, and gesture-active state before restoring OEM views and clearing entry/exit snapshots.
 - This prevents a newly attached notification window or a failed presentation creation from inheriting stale non-zero progress and accidentally appearing active to the bridge. Entry and exit state are cleared in the same teardown path.
 - No target-ROM runtime behavior is claimed until tested on the device.
+
+
+## Independent presentation teardown recovery
+
+- Presentation teardown now runs OEM-facing restoration operations as isolated cleanup steps. A failure restoring MIUI material, backdrop blur, stack transforms, row state, shortcuts, header views, wallpaper foreground, or overlay removal is logged and does not prevent later cleanup steps from running.
+- Native header rows are restored independently, so one detached or recycled view cannot prevent the remaining captured header views from being restored.
+- The presentation's internal references and neutral progress state are still cleared after these best-effort restoration attempts. This limits stale ownership and reference retention after an OEM lifecycle failure.
+- This is defensive cleanup behavior; it does not establish that all target-ROM private APIs or visual restoration paths have been verified.
