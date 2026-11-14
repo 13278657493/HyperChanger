@@ -46,7 +46,7 @@ public final class IosShadeBackdropBlur {
         } catch (Throwable error) {
             setter = null;
             getter = null;
-            Xp.log("[IOSShade] staged backdrop blur control unavailable: " + error);
+            Xp.log("[IOSNotificationCenter] staged backdrop blur control unavailable: " + error);
         }
         try {
             Method apply = Xp.findClass("com.android.systemui.statusbar.BlurUtils", loader)
@@ -81,7 +81,7 @@ public final class IosShadeBackdropBlur {
                         return result;
                     });
         } catch (Throwable error) {
-            Xp.log("[IOSShade] window blur radius observation unavailable: " + error);
+            Xp.log("[IOSNotificationCenter] window blur radius observation unavailable: " + error);
         }
     }
 
