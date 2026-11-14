@@ -23,6 +23,7 @@ public final class IosShadeGestureHooks {
         // future presentation host explicitly claims a measured notification root.
         IosShadeBackdropBlur.install(loader);
         IosShadeMaterial.install();
+        IosShadeClearGesture.install(Xp.api(), loader);
 
         try {
             Class<?> expand = Xp.findClass(
