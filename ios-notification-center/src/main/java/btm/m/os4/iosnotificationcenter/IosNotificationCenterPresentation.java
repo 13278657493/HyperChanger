@@ -715,13 +715,20 @@ public final class IosNotificationCenterPresentation {
             if (!(candidate instanceof FrameLayout)) return false;
             FrameLayout target = (FrameLayout) candidate;
             Context context = root.getContext();
-            Class<?> type = Class.forName("com.android.keyguard.clock.KeyguardClockContainer", false,
-                    context.getClassLoader());
-            View nativeClock = (View) type.getConstructor(Context.class).newInstance(context);
-            type.getMethod("addClockView").invoke(nativeClock);
-            if (!(nativeClock instanceof FrameLayout) || ((FrameLayout) nativeClock).getChildCount() == 0) {
-                Xp.log(TAG + "keyguard clock has no content; retaining native shade header");
-                return false;
+            View nativeClock = null;
+            try {
+                Class<?> type = Class.forName("com.android.keyguard.clock.KeyguardClockContainer", false,
+                        context.getClassLoader());
+                View candidateClock = (View) type.getConstructor(Context.class).newInstance(context);
+                type.getMethod("addClockView").invoke(candidateClock);
+                if (candidateClock instanceof FrameLayout
+                        && ((FrameLayout) candidateClock).getChildCount() > 0) {
+                    nativeClock = candidateClock;
+                } else {
+                    Xp.log(TAG + "keyguard clock has no content; using native shade header");
+                }
+            } catch (Throwable clockError) {
+                Xp.log(TAG + "optional keyguard clock unavailable; using native shade header: " + clockError);
             }
             FrameLayout container = new DisplayHost(context);
             container.setClipChildren(true);
@@ -733,11 +740,13 @@ public final class IosNotificationCenterPresentation {
             container.setFocusableInTouchMode(false);
             container.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
             allowBackdropSampling(container);
-            nativeClock.setClickable(false);
-            nativeClock.setFocusable(false);
-            nativeClock.setFocusableInTouchMode(false);
-            nativeClock.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-            container.addView(nativeClock, new FrameLayout.LayoutParams(-1, -1));
+            if (nativeClock != null) {
+                nativeClock.setClickable(false);
+                nativeClock.setFocusable(false);
+                nativeClock.setFocusableInTouchMode(false);
+                nativeClock.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+                container.addView(nativeClock, new FrameLayout.LayoutParams(-1, -1));
+            }
             ImageView foreground = new ImageView(context);
             foreground.setScaleType(ImageView.ScaleType.FIT_XY);
             foreground.setClickable(false);
@@ -757,7 +766,7 @@ public final class IosNotificationCenterPresentation {
                     Math.round(80f * context.getResources().getDisplayMetrics().density)));
             panel = target;
             host = container;
-            IosShadeMaterial.registerClock(nativeClock);
+            if (nativeClock != null) IosShadeMaterial.registerClock(nativeClock);
             depth = foreground;
             status = statusMirror;
             stack = byId(target, "notification_stack_scroller");
@@ -769,7 +778,8 @@ public final class IosNotificationCenterPresentation {
             findHeader();
             observer = target.getViewTreeObserver();
             observer.addOnPreDrawListener(FRAME);
-            Xp.log(TAG + "keyguard clock presentation attached");
+            Xp.log(TAG + (nativeClock != null
+                    ? "keyguard clock presentation attached" : "notification presentation attached without hosted clock"));
             return true;
         } catch (Throwable error) {
             Xp.log(TAG + "keyguard clock presentation unavailable: " + error);
@@ -861,6 +871,9 @@ public final class IosNotificationCenterPresentation {
     }
 
     private static void hideNativeHeader() {
+        // Without a hosted OEM clock, the native header remains the only reliable source
+        // of date/status content. Keep it visible instead of presenting an empty clock slot.
+        if (clock == null) return;
         if (notificationHeader != null && notificationHeader.getAlpha() != 0f) {
             notificationHeader.setAlpha(0f);
         }
@@ -882,6 +895,7 @@ public final class IosNotificationCenterPresentation {
     }
 
     private static void findHeader() {
+        if (clock == null) return;
         View header = byId(capturedHeader, "normal_notification_header_view");
         if (header == null) header = byId(window, "normal_notification_header_view");
         if (header == null) return;
@@ -1254,6 +1268,7 @@ public final class IosNotificationCenterPresentation {
     }
 
     private static void syncClockInfo() {
+        if (clock == null) return;
         if (clockInfo != null && !isClockInfo(clockInfo)) {
             clockInfo.setTranslationY(clockInfoBaseTranslation);
             clockInfo = null;
@@ -1582,7 +1597,8 @@ public final class IosNotificationCenterPresentation {
     private static void syncLandscapeLayout() {
         if (panel == null || host == null || panel.getWidth() <= 0 || panel.getHeight() <= 0) return;
         int rightWidth = landscapeStackWidth(panel.getWidth(), panel.getHeight());
-        boolean wantLandscape = rightWidth > 0;
+        // Do not reserve an empty clock column when this ROM has no compatible OEM clock.
+        boolean wantLandscape = clock != null && rightWidth > 0;
         if (!wantLandscape) {
             if (landscapeLayout) restoreLandscapeStackLayout();
             ViewGroup.LayoutParams hostParams = host.getLayoutParams();
