@@ -62,3 +62,14 @@ The new controller should receive a narrow host interface for screen/keyguard st
 ## Build pipeline
 
 The existing Android GitHub Actions workflow now uploads a separate iOS-Notification-Center-debug artifact in addition to the original HyperChanger APK. No workflow run or successful build has been observed yet, so compile status remains unverified.
+
+
+## 第三阶段：独立状态控制层（已建立）
+
+本阶段在 `ios-notification-center` 中新增了不依赖旧音乐封面模块的状态层：
+
+- `IosShadeState.java`：独立封装纵向拖动进度、通知/控制中心归属、横向切换进度。
+- `IosShadeController.java`：为 SystemUI hook 提供通知中心专用回调入口和状态读取接口。
+- `IosShadeBlurEffects.java`：独立的 RenderEffect 模糊半径缓存，不引用旧包。
+
+注意：这批代码目前是独立模块内的基础层，尚未接入 SystemUI hooks，也尚未完成 Gradle 编译。旧模块的 ShadeLayer 与原始通知中心逻辑保持不变。下一步应把通知中心 hooks 的状态回调逐步改为调用新 controller，再迁移视图/壁纸呈现层。
