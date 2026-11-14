@@ -63,9 +63,16 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew --no-daemon --stacktrace assembleDebug
 
-      - name: Upload Debug APK
+      - name: Upload HyperChanger Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: HyperChanger-debug
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload standalone iOS Notification Center Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: iOS-Notification-Center-debug
+          path: ios-notification-center/build/outputs/apk/debug/*.apk
           if-no-files-found: error
