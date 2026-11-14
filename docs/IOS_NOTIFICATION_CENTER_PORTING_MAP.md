@@ -350,3 +350,10 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - Exit snapshots are now restored only while both the owning notification row and captured view remain attached to the window. A detached row awaiting OEM removal/recycling is no longer eligible for a stale visual restore.
 - Entry-state traversal now uses a per-pass identity visited set for attached group children, matching exit snapshot traversal and preventing duplicate processing or recursive loops in OEM-provided child graphs.
 - Real removal/dismissal checks remain in place; these attachment checks are an additional lifecycle boundary, not a replacement for OEM removal state.
+
+
+## Presentation teardown ownership reset
+
+- `releasePresentation()` is the terminal boundary for normal close, feature disable, window replacement, and failed host creation. It now resets panel progress, layout progress, switching, and gesture-active state before restoring OEM views and clearing entry/exit snapshots.
+- This prevents a newly attached notification window or a failed presentation creation from inheriting stale non-zero progress and accidentally appearing active to the bridge. Entry and exit state are cleared in the same teardown path.
+- No target-ROM runtime behavior is claimed until tested on the device.
