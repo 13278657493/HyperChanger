@@ -16,7 +16,9 @@ public final class IosShadeGestureHooks {
 
     public static void install(ClassLoader loader) {
         if (installed) return;
-        CONTROLLER.setEnabled(true);
+        boolean expansionInstalled = false;
+        boolean switchInstalled = false;
+        boolean panelInstalled = false;
 
         // Install isolated MIUI material and blur observers. Presentation applies its own
         // visual layers only after the native notification root has been captured.
@@ -57,6 +59,7 @@ public final class IosShadeGestureHooks {
                 }
                 return result;
             });
+            expansionInstalled = true;
             Xp.log("[IOSNotificationCenter] native expansion observer installed");
         } catch (Throwable error) {
             Xp.log("[IOSNotificationCenter] expansion observer unavailable: " + error);
@@ -79,6 +82,7 @@ public final class IosShadeGestureHooks {
             };
             Xp.hookAll(switcher, "performProgressChanged", switchProgress);
             Xp.hookAll(switcher, "setSwitching", switchProgress);
+            switchInstalled = true;
             Xp.log("[IOSNotificationCenter] native panel switch observer installed");
         } catch (Throwable error) {
             Xp.log("[IOSNotificationCenter] switch observer unavailable: " + error);
@@ -101,11 +105,20 @@ public final class IosShadeGestureHooks {
                         CONTROLLER.progress(), true, null);
                 return result;
             });
+            panelInstalled = true;
             Xp.log("[IOSNotificationCenter] panel ownership observers installed");
         } catch (Throwable error) {
             Xp.log("[IOSNotificationCenter] panel ownership observers unavailable: " + error);
         }
 
+        // Do not advertise the feature as active when every native state source failed.
+        // Presentation.update() uses this gate to restore native UI instead of claiming
+        // notification ownership with a controller that can never receive progress.
+        boolean hasCoreObserver = expansionInstalled || switchInstalled || panelInstalled;
+        CONTROLLER.setEnabled(hasCoreObserver);
+        Xp.log("[IOSNotificationCenter] core observer status: expansion=" + expansionInstalled
+                + ", switch=" + switchInstalled + ", panel=" + panelInstalled
+                + ", enabled=" + hasCoreObserver);
         installed = true;
     }
 
