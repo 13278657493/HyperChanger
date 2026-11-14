@@ -127,7 +127,7 @@ final class IosNotificationShortcutLaunch {
         handler.removeCallbacks(cancellation);
         handler.removeCallbacks(failure);
         try {
-            if (collapse) IosNotificationCenterHooks.collapseForShortcut();
+            // The native shortcut manager owns its activity transition and shade dismissal.
             Xp.callMethod(moveController, "reset", "ios notification shortcut finished");
         } catch (Throwable error) {
             Xp.log("[IOSNotificationCenter] shortcut reset unavailable: " + error);
