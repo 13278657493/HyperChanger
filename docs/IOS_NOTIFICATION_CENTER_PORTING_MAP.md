@@ -125,3 +125,20 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - 时钟、媒体头、分组控件注册接口保留，后续接入独立布局时再使用。
 
 注意：此类涉及多组隐藏 MIUI View API，必须先在目标 ROM 验证实际方法/字段和恢复行为；目前只是代码移植及被动 hook 注册，不代表视觉效果已经启用。
+
+
+## 第八阶段：清空通知交互（已独立移植，等待 UI 绑定）
+
+新增：
+
+- `IosShadeClearAction.java`：清空通知单次分发、空列表判断、原生点击回退、触觉/缩放反馈和按钮触摸监听。
+- `IosShadeClearGesture.java`：在 `NotificationShadeWindowView.dispatchTouchEvent` 前捕获从清空按钮开始的手势，处理触摸 slop、多指和取消状态。
+
+接入情况：
+
+- 独立 SystemUI 初始化时注册根窗口手势 hook。
+- 清空按钮尚未由独立 presentation 创建，因此 target 初始为空；未绑定时该 hook 直接放行 OEM 原生事件。
+- 后续布局创建清空按钮后调用 `IosShadeClearAction.bindClear(button)` 即可绑定。
+- 清空动作优先调用实时通知列表的原生 clear API，只有首选路径不可用时才回退到原生 listener/button，避免重复清空。
+
+这两个文件已改为独立包，不依赖旧 ShadeLayer、旧 Main 或 hypermusiccover。清空按钮的具体布局和绑定点待独立 presentation 层接入。
