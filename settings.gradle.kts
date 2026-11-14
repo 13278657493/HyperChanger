@@ -27,4 +27,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "HyperChanger"
-include(":app")
+include(":app", ":ios-notification-center")
