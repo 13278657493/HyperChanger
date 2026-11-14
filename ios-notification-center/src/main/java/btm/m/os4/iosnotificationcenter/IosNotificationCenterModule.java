@@ -5,8 +5,8 @@ import io.github.libxposed.api.XposedModule;
 /**
  * Standalone libxposed entry point.
  *
- * Notification hooks are intentionally not installed until their dependencies have been
- * separated from HyperChanger's music-cover and legacy shade implementation.
+ * Notification hooks are isolated in this module. Presentation ownership remains dormant until
+ * an independent host attaches to IosNotificationPresentationBridge.
  */
 public final class IosNotificationCenterModule extends XposedModule {
     @Override
@@ -17,7 +17,8 @@ public final class IosNotificationCenterModule extends XposedModule {
 
         Xp.attach(this);
 
-        // Observe native shade state only. The standalone visual takeover is not enabled yet.
+        // Observe native shade state and install isolated row lifecycle hooks. The presentation
+        // bridge remains detached, so OEM notification rendering is still left untouched.
         IosShadeGestureHooks.install(param.getClassLoader());
         IosNotificationStackHooks.install(param.getClassLoader());
     }
