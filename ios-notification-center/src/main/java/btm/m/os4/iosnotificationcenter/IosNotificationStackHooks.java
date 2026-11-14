@@ -90,7 +90,7 @@ final class IosNotificationStackHooks {
 
     /** Apply after OEM property composition, including compiled/inlined stacking paths. */
     static void enforceUnstackedRow(View row) {
-        if (!IosNotificationCenterPresentation.ownsRow(row) || !isFocusOrMediaNotification(row)) return;
+        if (!IosNotificationPresentationBridge.ownsRow(row) || !isFocusOrMediaNotification(row)) return;
         try {
             Object injector = Xp.callMethod(row, "getInjector");
             Xp.setObjectField(injector, "stackingProgress", 0f);
@@ -136,7 +136,7 @@ final class IosNotificationStackHooks {
     }
 
     static void enforceUnstackedRows(View stack) {
-        if (!IosNotificationCenterPresentation.ownsStack(stack) || !(stack instanceof ViewGroup)) return;
+        if (!IosNotificationPresentationBridge.ownsStack(stack) || !(stack instanceof ViewGroup)) return;
         ViewGroup group = (ViewGroup) stack;
         for (int i = 0; i < group.getChildCount(); i++) {
             View row = group.getChildAt(i);
@@ -269,12 +269,12 @@ final class IosNotificationStackHooks {
     // Property composition runs after resetViewStates has restored the ambient state.
     // Give its stacking calculator the same resting origin throughout the exit.
     static Object restingStackOrigin(View row) {
-        if (!IosNotificationCenterPresentation.ownsRow(row)) return null;
+        if (!IosNotificationPresentationBridge.ownsRow(row)) return null;
         try {
             Object ambient = Xp.getObjectField(Xp.callMethod(row, "getInjector"), "ambientState");
             View parent = row;
             while (parent.getParent() instanceof View &&
-                    !IosNotificationCenterPresentation.ownsStack(parent)) parent = (View) parent.getParent();
+                    !IosNotificationPresentationBridge.ownsStack(parent)) parent = (View) parent.getParent();
             LayoutInputs inputs = new LayoutInputs(ambient);
             inputs.set("mStackY", ((Number) Xp.callMethod(parent, "getTopPadding")).floatValue());
             return inputs;
@@ -286,7 +286,7 @@ final class IosNotificationStackHooks {
     }
 
     private static void constrainSpecialRows(ViewGroup stack, float top) {
-        float bottom = IosNotificationCenterPresentation.viewportBottom(stack);
+        float bottom = IosNotificationPresentationBridge.viewportBottom(stack);
         // A block taller than the viewport remains a scrollable list, never overlapping cards.
         if (specialRowsExtent(stack) > bottom - top + 1f) return;
         float overflow = 0f;
@@ -444,7 +444,7 @@ final class IosNotificationStackHooks {
             }
             Xp.hookAll(injector, "applyViewStackingInfo", chain -> {
                 Object[] args = chain.getArgs().toArray();
-                if (IosNotificationCenterPresentation.isActive() && args.length >= 2
+                if (IosNotificationPresentationBridge.isActive() && args.length >= 2
                         && args[0] instanceof View && isFocusOrMediaNotification((View) args[0])) {
                     args[1] = unstacked;
                     return chain.proceed(args);
@@ -454,7 +454,7 @@ final class IosNotificationStackHooks {
             Xp.hookAll(injector, "updateDimmingAndVisible", chain -> {
                 Object target = chain.getThisObject();
                 Object row = Xp.getObjectField(target, "view");
-                if (IosNotificationCenterPresentation.isActive() && row instanceof View
+                if (IosNotificationPresentationBridge.isActive() && row instanceof View
                         && isFocusOrMediaNotification((View) row)) {
                     Xp.setObjectField(target, "stackingProgress", 0f);
                     return chain.proceed(new Object[]{unstacked});
@@ -464,7 +464,7 @@ final class IosNotificationStackHooks {
             Class<?> interactor = Xp.findClass(
                     "com.miui.systemui.notification.domain.interactor.NotificationStackingInteractor", loader);
             io.github.libxposed.api.XposedInterface.Hooker specialRows = chain -> {
-                if (IosNotificationCenterPresentation.isActive() && !chain.getArgs().isEmpty()
+                if (IosNotificationPresentationBridge.isActive() && !chain.getArgs().isEmpty()
                         && chain.getArgs().get(0) instanceof View
                         && isFocusOrMediaNotification((View) chain.getArgs().get(0))) return unstacked;
                 return chain.proceed();
@@ -472,16 +472,16 @@ final class IosNotificationStackHooks {
             Xp.hookAll(interactor, "calculateStackingInfo", specialRows);
             Xp.hookAll(interactor, "updateParentStackingInfo", specialRows);
             Xp.hookAll(interactor, "updateChildStackingInfo", specialRows);
-            Xp.log("[IOSShade] focus/media notification stacking excluded");
+            Xp.log("[IOSNotificationCenter] focus/media notification stacking excluded");
         } catch (Throwable error) {
-            Xp.log("[IOSShade] focus/media notification stacking unavailable: " + error);
+            Xp.log("[IOSNotificationCenter] focus/media notification stacking unavailable: " + error);
         }
         try {
             Class<?> stack = Xp.findClass(
                     "com.android.systemui.statusbar.notification.stack.NotificationStackScrollLayout", loader);
             Xp.hookAll(stack, "onMeasure", chain -> {
                 View view = (View) chain.getThisObject();
-                int width = IosNotificationCenterPresentation.landscapeStackWidth(view);
+                int width = IosNotificationPresentationBridge.landscapeStackWidth(view);
                 if (width <= 0 || chain.getArgs().size() != 2) return chain.proceed();
                 Object[] args = chain.getArgs().toArray();
                 args[0] = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY);
@@ -492,20 +492,20 @@ final class IosNotificationStackHooks {
                 if (!(chain.getThisObject() instanceof android.view.View) || !(result instanceof Number)) {
                     return result;
                 }
-                return ((Number) result).intValue() + IosNotificationCenterPresentation.extraScrollRange(
+                return ((Number) result).intValue() + IosNotificationPresentationBridge.extraScrollRange(
                         (android.view.View) chain.getThisObject());
             });
             Xp.hookAll(stack, "setAlpha", chain -> {
                 Object[] args = chain.getArgs().toArray();
                 if (args.length == 1 && args[0] instanceof Number) {
-                    args[0] = IosNotificationCenterPresentation.panelStackAlpha(
+                    args[0] = IosNotificationPresentationBridge.panelStackAlpha(
                             (View) chain.getThisObject(), ((Number) args[0]).floatValue());
                 }
                 return chain.proceed(args);
             });
             Xp.hookAll(stack, "updateVisibility$5", chain -> {
                 View view = (View) chain.getThisObject();
-                if (IosNotificationCenterPresentation.ownsStack(view)) {
+                if (IosNotificationPresentationBridge.ownsStack(view)) {
                     if (view.getVisibility() != View.VISIBLE) view.setVisibility(View.VISIBLE);
                     return null;
                 }
@@ -513,7 +513,7 @@ final class IosNotificationStackHooks {
             });
             IosNotificationAnimationHooks.deoptimize(stack, "setAlpha", "updateVisibility$5");
         } catch (Throwable error) {
-            Xp.log("[IOSShade] notification scroll range unavailable: " + error);
+            Xp.log("[IOSNotificationCenter] notification scroll range unavailable: " + error);
         }
         try {
             Class<?> stack = Xp.findClass(
@@ -531,7 +531,7 @@ final class IosNotificationStackHooks {
                     return null;
                 }
                 IosNotificationExitState.apply(view);
-                if (!IosNotificationCenterPresentation.ownsStack(view)
+                if (!IosNotificationPresentationBridge.ownsStack(view)
                         || chain.getArgs().isEmpty() || !(chain.getArgs().get(0) instanceof Canvas)) {
                     return chain.proceed();
                 }
@@ -545,7 +545,7 @@ final class IosNotificationStackHooks {
                     // second RenderNode and redraws heads-up rows separately during collapse.
                     foregroundBlur.set("mBlurEffect", null);
                     canvas.clipRect(0f, 0f, view.getWidth(),
-                            IosNotificationCenterPresentation.viewportBottomForDraw(view));
+                            IosNotificationPresentationBridge.viewportBottomForDraw(view));
                     return chain.proceed();
                 } finally {
                     canvas.restoreToCount(save);
@@ -574,7 +574,7 @@ final class IosNotificationStackHooks {
                 }
             });
         } catch (Throwable error) {
-            Xp.log("[IOSShade] notification stack mask unavailable: " + error);
+            Xp.log("[IOSNotificationCenter] notification stack mask unavailable: " + error);
         }
         try {
             Class<?> algorithm = Xp.findClass(
@@ -587,14 +587,14 @@ final class IosNotificationStackHooks {
                 IosNotificationAnimationHooks.deoptimize(
                         stack.getDeclaredField("mChildrenUpdater").getType(), "onPreDraw");
             } catch (Throwable error) {
-                Xp.log("[IOSShade] stack pre-draw deoptimization unavailable: " + error);
+                Xp.log("[IOSNotificationCenter] stack pre-draw deoptimization unavailable: " + error);
             }
             Xp.hookAll(algorithm, "resetViewStates", chain -> {
                 if (chain.getArgs().isEmpty()) return chain.proceed();
                 Object ambient = chain.getArgs().get(0);
                 Object host = Xp.getObjectField(chain.getThisObject(), "mHostView");
                 if (!(host instanceof android.view.View)) return chain.proceed();
-                boolean own = IosNotificationCenterPresentation.ownsStack((View) host);
+                boolean own = IosNotificationPresentationBridge.ownsStack((View) host);
                 if (own && host instanceof ViewGroup) {
                     expandSpecialRows((ViewGroup) host);
                 }
@@ -602,8 +602,8 @@ final class IosNotificationStackHooks {
                 ViewGroup view = (ViewGroup) host;
                 IosNotificationEntryState.prepareTargets(view);
                 float nativeTop = ((Number) Xp.callMethod(view, "getTopPadding")).floatValue();
-                float top = nativeTop + IosNotificationCenterPresentation.stackOffset(view, nativeTop);
-                float bottom = IosNotificationCenterPresentation.viewportBottom(view);
+                float top = nativeTop + IosNotificationPresentationBridge.stackOffset(view, nativeTop);
+                float bottom = IosNotificationPresentationBridge.viewportBottom(view);
                 Object controller = Xp.getObjectField(view, "mController");
                 Object injector = Xp.getObjectField(controller, "mNsslControllerInjector");
                 try (LayoutInputs inputs = new LayoutInputs(ambient);
@@ -629,14 +629,14 @@ final class IosNotificationStackHooks {
             Xp.hookAll(algorithm, "updateViewWithShelf", chain -> {
                 if (!chain.getArgs().isEmpty() && chain.getArgs().get(0) instanceof View) {
                     View row = (View) chain.getArgs().get(0);
-                    if (IosNotificationCenterPresentation.ownsRow(row)
+                    if (IosNotificationPresentationBridge.ownsRow(row)
                             && isFocusOrMediaNotification(row)) return null;
                 }
                 return chain.proceed();
             });
             IosNotificationAnimationHooks.deoptimize(algorithm, "resetViewStates");
         } catch (Throwable error) {
-            Xp.log("[IOSShade] notification stack position unavailable: " + error);
+            Xp.log("[IOSNotificationCenter] notification stack position unavailable: " + error);
         }
     }
 }
