@@ -301,3 +301,9 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 
 - The exit snapshot map uses weak View keys. Snapshot values now keep the owning notification row through `WeakReference` as well, avoiding a value-to-key strong-reference cycle that could defeat WeakHashMap collection for notification-row entries.
 - Restore skips snapshots whose owner row has already been collected or no longer belongs to the active presentation. Background snapshots still validate against their owning row.
+
+
+## Snapshot owner validation stability
+
+- Exit restoration resolves the weak owner-row reference once into a local strong reference before checking Bridge ownership. This avoids two separate weak-reference reads producing inconsistent results if collection occurs between reads.
+- The temporary strong reference exists only for the duration of that restore call; snapshot values continue to avoid retaining rows for the lifetime of the weak-key map.
