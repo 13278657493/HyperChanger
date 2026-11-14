@@ -17,7 +17,7 @@ public final class IosNotificationCenterModule extends XposedModule {
 
         Xp.attach(this);
 
-        // Scaffold checkpoint: keep SystemUI untouched until the notification-only runtime
-        // and controller have been extracted and verified.
+        // Observe native shade state only. The standalone visual takeover is not enabled yet.
+        IosShadeGestureHooks.install(param.getClassLoader());
     }
 }
