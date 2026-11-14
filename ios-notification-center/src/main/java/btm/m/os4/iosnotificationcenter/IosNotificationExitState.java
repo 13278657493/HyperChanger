@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
 
 
@@ -83,8 +84,8 @@ final class IosNotificationExitState {
 
     private static void restore(View view, Card card) {
         if (card == null || view == null || view.getVisibility() == View.GONE
-                || card.ownerRow == null
-                || !IosNotificationPresentationBridge.ownsRow(card.ownerRow)) return;
+                || card.ownerRow.get() == null
+                || !IosNotificationPresentationBridge.ownsRow(card.ownerRow.get())) return;
         try {
             // Keep real removals/dismissals under OEM control, even during an exit.
             if (card.expandable && Boolean.TRUE.equals(Xp.callMethod(view, "isRemoved"))) return;
@@ -114,14 +115,14 @@ final class IosNotificationExitState {
 
     private static final class Card {
         final boolean expandable;
-        final View ownerRow;
+        final WeakReference<View> ownerRow;
         final int visibility, height, clipTop, clipBottom, extClipBottom, dimAlpha;
         final float x, y, z, sx, sy, alpha, transitionAlpha, pivotX, pivotY;
         final Rect bounds;
 
         Card(View view, boolean expandable, View ownerRow) {
             this.expandable = expandable;
-            this.ownerRow = ownerRow;
+            this.ownerRow = new WeakReference<>(ownerRow);
             visibility = view.getVisibility();
             x = value(view, "getSuperTranslationX");
             y = value(view, "getSuperTranslationY");
