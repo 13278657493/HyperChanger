@@ -328,3 +328,10 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 
 - The module targets API 102 but declares API 101 as its minimum framework API, matching the official libxposed example's compatibility convention.
 - The current implementation uses the standard module lifecycle and hook-chain APIs and does not rely on API-102-only hot-reload callbacks or hook-handle replacement. Keeping `minApiVersion=101` avoids unnecessarily excluding compatible API 101 frameworks while `targetApiVersion=102` remains explicit.
+
+
+## Observer failure isolation
+
+- Native SystemUI methods are always allowed to complete first; post-call shade state extraction and presentation attachment/capture are wrapped independently so an OEM field rename, null animator, overload change, or lifecycle race cannot turn a successful native call into an observer-thrown crash.
+- The shade switch observer validates the reflected progress and switching values before updating module state. Control-center, notification-panel, keyguard, window, stack, and header observers validate optional arguments/receiver types and log failures without propagating them into SystemUI.
+- This is defensive runtime isolation, not proof that the MIUI/HyperOS private member names match a specific firmware build; target-device validation remains necessary.
