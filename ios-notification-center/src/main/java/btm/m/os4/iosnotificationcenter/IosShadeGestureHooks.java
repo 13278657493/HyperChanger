@@ -47,15 +47,19 @@ public final class IosShadeGestureHooks {
                 Object result = chain.proceed();
                 List<Object> args = chain.getArgs();
                 if (args.size() == 4 && CONTROLLER.isEnabled()) {
-                    Object tracking = Xp.callMethod(chain.getThisObject(), "getTracking");
-                    boolean dragging = Boolean.TRUE.equals(Xp.callMethod(tracking, "getValue"));
-                    // The standalone observer does not own a shade root yet; let the
-                    // state machine fall back to the native threshold until presentation
-                    // attaches its measured panel height.
-                    float target = CONTROLLER.onRawExpansion(((Number) args.get(0)).floatValue(),
-                            ((Number) args.get(1)).floatValue(), 0f, dragging);
-                    CONTROLLER.setProgress(target);
-                    IosNotificationCenterPresentation.update(target, target, true, null);
+                    try {
+                        Object tracking = Xp.callMethod(chain.getThisObject(), "getTracking");
+                        boolean dragging = Boolean.TRUE.equals(Xp.callMethod(tracking, "getValue"));
+                        // The standalone observer does not own a shade root yet; let the
+                        // state machine fall back to the native threshold until presentation
+                        // attaches its measured panel height.
+                        float target = CONTROLLER.onRawExpansion(((Number) args.get(0)).floatValue(),
+                                ((Number) args.get(1)).floatValue(), 0f, dragging);
+                        CONTROLLER.setProgress(target);
+                        IosNotificationCenterPresentation.update(target, target, true, null);
+                    } catch (Throwable error) {
+                        Xp.log("[IOSNotificationCenter] expansion state observation failed: " + error);
+                    }
                 }
                 return result;
             });
@@ -70,14 +74,25 @@ public final class IosShadeGestureHooks {
                     "com.miui.systemui.shade.ShadeSwitchControllerImpl", loader);
             io.github.libxposed.api.XposedInterface.Hooker switchProgress = chain -> {
                 Object result = chain.proceed();
-                Object controller = chain.getThisObject();
-                Object animator = Xp.getObjectField(controller, "progressAnimator");
-                boolean inSwitch = Boolean.TRUE.equals(Xp.getObjectField(controller, "switching"));
-                CONTROLLER.onSwitchProgress(
-                        ((Number) Xp.getObjectField(animator, "_progress")).floatValue(), inSwitch);
-                IosNotificationCenterPresentation.setSwitching(inSwitch);
-                IosNotificationCenterPresentation.update(CONTROLLER.progress(),
-                        CONTROLLER.progress(), true, null);
+                // Both methods are hooked by name across all overloads. Vendor implementations
+                // can change fields or call setSwitching before progressAnimator is initialized;
+                // observation must never turn a successful OEM call into a SystemUI crash.
+                try {
+                    Object controller = chain.getThisObject();
+                    Object animator = Xp.getObjectField(controller, "progressAnimator");
+                    Object rawProgress = animator == null ? null : Xp.getObjectField(animator, "_progress");
+                    Object rawSwitching = Xp.getObjectField(controller, "switching");
+                    if (!(rawProgress instanceof Number) || !(rawSwitching instanceof Boolean)) {
+                        return result;
+                    }
+                    boolean inSwitch = (Boolean) rawSwitching;
+                    CONTROLLER.onSwitchProgress(((Number) rawProgress).floatValue(), inSwitch);
+                    IosNotificationCenterPresentation.setSwitching(inSwitch);
+                    IosNotificationCenterPresentation.update(CONTROLLER.progress(),
+                            CONTROLLER.progress(), true, null);
+                } catch (Throwable error) {
+                    Xp.log("[IOSNotificationCenter] switch state observation failed: " + error);
+                }
                 return result;
             };
             Xp.hookAll(switcher, "performProgressChanged", switchProgress);
@@ -93,16 +108,28 @@ public final class IosShadeGestureHooks {
                     "com.android.systemui.shade.NotificationPanelViewControllerInjector", loader);
             Xp.hookAll(injector, "onControlCenterAppearChanged", chain -> {
                 Object result = chain.proceed();
-                CONTROLLER.onControlCenterAppearance(Boolean.TRUE.equals(chain.getArgs().get(0)));
-                IosNotificationCenterPresentation.update(CONTROLLER.progress(),
-                        CONTROLLER.progress(), true, null);
+                try {
+                    if (!chain.getArgs().isEmpty() && chain.getArgs().get(0) instanceof Boolean) {
+                        CONTROLLER.onControlCenterAppearance((Boolean) chain.getArgs().get(0));
+                        IosNotificationCenterPresentation.update(CONTROLLER.progress(),
+                                CONTROLLER.progress(), true, null);
+                    }
+                } catch (Throwable error) {
+                    Xp.log("[IOSNotificationCenter] control-center state observation failed: " + error);
+                }
                 return result;
             });
             Xp.hookAll(injector, "onNotificationAppearChanged", chain -> {
                 Object result = chain.proceed();
-                CONTROLLER.onNotificationAppearance(Boolean.TRUE.equals(chain.getArgs().get(0)));
-                IosNotificationCenterPresentation.update(CONTROLLER.progress(),
-                        CONTROLLER.progress(), true, null);
+                try {
+                    if (!chain.getArgs().isEmpty() && chain.getArgs().get(0) instanceof Boolean) {
+                        CONTROLLER.onNotificationAppearance((Boolean) chain.getArgs().get(0));
+                        IosNotificationCenterPresentation.update(CONTROLLER.progress(),
+                                CONTROLLER.progress(), true, null);
+                    }
+                } catch (Throwable error) {
+                    Xp.log("[IOSNotificationCenter] notification-panel state observation failed: " + error);
+                }
                 return result;
             });
             panelInstalled = true;
