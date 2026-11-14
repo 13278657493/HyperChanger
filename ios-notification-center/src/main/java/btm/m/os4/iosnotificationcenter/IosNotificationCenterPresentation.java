@@ -275,6 +275,8 @@ public final class IosNotificationCenterPresentation {
         clearObserver = null;
         releasePresentation();
         restoreNativeClearButtons();
+        capturedStack = null;
+        capturedHeader = null;
         RESOURCE_IDS.clear();
         window = null;
     }
