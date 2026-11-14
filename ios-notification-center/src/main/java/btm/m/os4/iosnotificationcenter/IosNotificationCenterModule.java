@@ -19,5 +19,6 @@ public final class IosNotificationCenterModule extends XposedModule {
 
         // Observe native shade state only. The standalone visual takeover is not enabled yet.
         IosShadeGestureHooks.install(param.getClassLoader());
+        IosNotificationStackHooks.install(param.getClassLoader());
     }
 }
