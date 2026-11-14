@@ -8,7 +8,7 @@ The separate Gradle project is included as :ios-notification-center. Its applica
 
 The new module has its own Xp helper. It is adapted from the original reflection/hook helper, but its logger now uses Android Log and it has no imports from the original HyperChanger package. The entry point attaches this helper only after the SystemUI package callback.
 
-The module is deliberately inert at this checkpoint: it does not install hooks yet.
+The module now installs the independent gesture observer, notification-stack hooks, and presentation lifecycle hooks only in `com.android.systemui`. The presentation bridge attaches when `NotificationShadeWindowView` is captured; native rows are claimed only while the independent presentation reports active ownership. The module is not yet build-verified.
 
 ## Notification package dependency map
 
@@ -213,3 +213,11 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - 修正模块入口注释与 APK 首页状态文案，避免仍显示“Hook 尚未启用”的过期脚手架提示。
 
 这些属于代码级生命周期修复；仍未有 GitHub Actions 构建运行记录，尚不能视为编译通过。
+
+
+## Latest lifecycle hardening
+
+- `IosNotificationPresentationHooks` observes notification-window attach/detach, stack/header capture, and keyguard state callbacks.
+- `IosNotificationCenterPresentation.captureStack()` and `captureHeader()` now retry presentation creation when the notification hierarchy becomes available after the shade window. This addresses the ordering case where the first expansion arrives before the panel/clock subtree has finished inflating.
+- Retry is gated by an attached shade window, positive notification progress, an enabled standalone controller, and the absence of an existing host. It does not force OEM UI ownership before a host exists.
+- GitHub Actions currently reports no workflow runs for `adapt/xiaomi-17-pro-max`; compilation and APK packaging remain unverified.
