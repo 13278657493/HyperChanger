@@ -269,3 +269,9 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - The standalone module packages its libxposed registration files from `src/main/resources/META-INF/xposed/`: `java_init.list`, `module.prop`, and `scope.list`.
 - Removed the catch-all resource exclusion from the standalone module's Gradle packaging block. Keeping only the Xposed metadata merge rule avoids excluding the very files required for module entry registration and scope discovery.
 - The APK still needs a real Gradle build and archive inspection before packaging can be considered verified.
+
+## Fault-isolated SystemUI hook startup
+
+- Optional blur, material, and clear-gesture observers are initialized independently. A missing OEM class or hidden API now logs its own failure without aborting the core shade gesture observers.
+- The module entry point also isolates the gesture, notification-stack, and presentation-lifecycle hook families. A failure in one family no longer prevents the other families from attempting installation.
+- This is a startup resilience improvement; successful installation on a specific HyperOS build still requires device-side LSPosed logs.
