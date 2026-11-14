@@ -15,9 +15,13 @@ public final class IosNotificationPresentationHooks {
                     "com.android.systemui.shade.NotificationShadeWindowView", loader);
             io.github.libxposed.api.XposedInterface.Hooker attach = chain -> {
                 Object result = chain.proceed();
-                Object self = chain.getThisObject();
-                if (self instanceof ViewGroup) {
-                    IosNotificationCenterPresentation.attach((ViewGroup) self);
+                try {
+                    Object self = chain.getThisObject();
+                    if (self instanceof ViewGroup) {
+                        IosNotificationCenterPresentation.attach((ViewGroup) self);
+                    }
+                } catch (Throwable error) {
+                    Xp.log("[IOSNotificationCenter] notification window attach observation failed: " + error);
                 }
                 return result;
             };
@@ -33,8 +37,12 @@ public final class IosNotificationPresentationHooks {
             Xp.hook(Xp.findMethodExact(window, "onDetachedFromWindow"), chain -> {
                 Object self = chain.getThisObject();
                 Object result = chain.proceed();
-                if (self instanceof ViewGroup) {
-                    IosNotificationCenterPresentation.detachWindow((ViewGroup) self);
+                try {
+                    if (self instanceof ViewGroup) {
+                        IosNotificationCenterPresentation.detachWindow((ViewGroup) self);
+                    }
+                } catch (Throwable error) {
+                    Xp.log("[IOSNotificationCenter] notification window detach observation failed: " + error);
                 }
                 return result;
             });
@@ -47,8 +55,12 @@ public final class IosNotificationPresentationHooks {
                     loader);
             io.github.libxposed.api.XposedInterface.Hooker capture = chain -> {
                 Object result = chain.proceed();
-                if (chain.getThisObject() instanceof View) {
-                    IosNotificationCenterPresentation.captureStack((View) chain.getThisObject());
+                try {
+                    if (chain.getThisObject() instanceof View) {
+                        IosNotificationCenterPresentation.captureStack((View) chain.getThisObject());
+                    }
+                } catch (Throwable error) {
+                    Xp.log("[IOSNotificationCenter] stack capture observation failed: " + error);
                 }
                 return result;
             };
@@ -61,8 +73,12 @@ public final class IosNotificationPresentationHooks {
             Class<?> header = Xp.findClass("com.android.systemui.qs.MiuiNotificationHeaderView", loader);
             Xp.hookAll(header, "onFinishInflate", chain -> {
                 Object result = chain.proceed();
-                if (chain.getThisObject() instanceof View) {
-                    IosNotificationCenterPresentation.captureHeader((View) chain.getThisObject());
+                try {
+                    if (chain.getThisObject() instanceof View) {
+                        IosNotificationCenterPresentation.captureHeader((View) chain.getThisObject());
+                    }
+                } catch (Throwable error) {
+                    Xp.log("[IOSNotificationCenter] header capture observation failed: " + error);
                 }
                 return result;
             });
@@ -74,9 +90,13 @@ public final class IosNotificationPresentationHooks {
                     "com.android.systemui.statusbar.policy.KeyguardStateControllerImpl", loader);
             Xp.hookAll(keyguard, "notifyKeyguardState", chain -> {
                 Object result = chain.proceed();
-                if (!chain.getArgs().isEmpty() && chain.getArgs().get(0) instanceof Boolean) {
-                    IosNotificationCenterPresentation.onKeyguardStateChanged(
-                            (Boolean) chain.getArgs().get(0));
+                try {
+                    if (!chain.getArgs().isEmpty() && chain.getArgs().get(0) instanceof Boolean) {
+                        IosNotificationCenterPresentation.onKeyguardStateChanged(
+                                (Boolean) chain.getArgs().get(0));
+                    }
+                } catch (Throwable error) {
+                    Xp.log("[IOSNotificationCenter] keyguard state observation failed: " + error);
                 }
                 return result;
             });
@@ -87,9 +107,13 @@ public final class IosNotificationPresentationHooks {
             Class<?> monitor = Xp.findClass("com.android.keyguard.KeyguardUpdateMonitor", loader);
             Xp.hookAll(monitor, "setKeyguardShowing", chain -> {
                 Object result = chain.proceed();
-                if (!chain.getArgs().isEmpty() && chain.getArgs().get(0) instanceof Boolean) {
-                    IosNotificationCenterPresentation.onKeyguardStateChanged(
-                            (Boolean) chain.getArgs().get(0));
+                try {
+                    if (!chain.getArgs().isEmpty() && chain.getArgs().get(0) instanceof Boolean) {
+                        IosNotificationCenterPresentation.onKeyguardStateChanged(
+                                (Boolean) chain.getArgs().get(0));
+                    }
+                } catch (Throwable error) {
+                    Xp.log("[IOSNotificationCenter] keyguard monitor observation failed: " + error);
                 }
                 return result;
             });
