@@ -59,7 +59,7 @@ public final class IosShadeWallpaperReveal {
         if (!enabled) {
             wallpaper.setAlpha(1f);
             lastBlur = -1; // The ordinary animation owns the effect in this mode.
-            IosNotificationCenterPresentation.setWallpaperReveal(1f, 0);
+            listener.onWallpaperReveal(1f, 0);
             glass.reset();
             return;
         }
@@ -105,7 +105,7 @@ public final class IosShadeWallpaperReveal {
             lastBlur = blur;
         }
         // The existing foreground remains above the clock, with its original geometry.
-        IosNotificationCenterPresentation.setWallpaperReveal(alpha, landscape ? 0 : blur);
+        listener.onWallpaperReveal(alpha, landscape ? 0 : blur);
         // The stationary scene below this sheet remains a populated local sampling source.
         // Crossfade the artwork, never retire/recreate a native sampler during the gesture.
         glass.setAlpha(1f - alpha);
@@ -128,6 +128,6 @@ public final class IosShadeWallpaperReveal {
         lastBlur = -1;
         glass.reset();
         root = null;
-        IosNotificationCenterPresentation.setWallpaperReveal(1f, 0);
+        listener.onWallpaperReveal(1f, 0);
     }
 }
