@@ -365,3 +365,9 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - Native header rows are restored independently, so one detached or recycled view cannot prevent the remaining captured header views from being restored.
 - The presentation's internal references and neutral progress state are still cleared after these best-effort restoration attempts. This limits stale ownership and reference retention after an OEM lifecycle failure.
 - This is defensive cleanup behavior; it does not establish that all target-ROM private APIs or visual restoration paths have been verified.
+
+## Standalone APK CI trigger and artifact
+
+- The branch workflow defines a separate `build-notification-center` job. It compiles only `:ios-notification-center:assembleDebug`, verifies the expected APK is non-empty, and uploads it as the `iOS-Notification-Center-debug` artifact.
+- The workflow is intentionally committed to `adapt/xiaomi-17-pro-max`; the repository default branch still contains its original workflow. Enabling Actions after an earlier push does not retroactively execute that push event.
+- A subsequent push to this development branch is required to create a fresh CI run. A successful job is the first point at which an installable debug APK can be claimed; source changes and workflow configuration alone are not build evidence.
