@@ -314,3 +314,11 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - `XposedModule.onPackageLoaded` receives `PackageLoadedParam`, whose API 102 class-loader accessor is `getDefaultClassLoader()`.
 - `getClassLoader()` belongs to `PackageReadyParam`; calling it from `onPackageLoaded` does not compile against API 102. The standalone module entry now uses `param.getDefaultClassLoader()` before installing SystemUI hooks.
 - The entry class remains a public no-argument `XposedModule` subclass, matching the API's module-entry contract.
+
+
+## Standalone libxposed APK metadata
+
+- The standalone module packages `META-INF/xposed/java_init.list`, `module.prop`, and `scope.list`; its Gradle resource packaging merges the `META-INF/xposed/*` entries, matching the official libxposed example pattern.
+- `java_init.list` points to the public no-argument `IosNotificationCenterModule`, and the static scope is limited to `com.android.systemui`.
+- `module.prop` is kept to the documented core keys (`minApiVersion`, `targetApiVersion`, `staticScope`, and `autoHotReload`). The user-facing description remains in the Android manifest rather than an extra, undocumented property.
+- The module uses `compileOnly` for libxposed API 102 and does not require the optional libxposed service dependency for its current hook-only implementation.
