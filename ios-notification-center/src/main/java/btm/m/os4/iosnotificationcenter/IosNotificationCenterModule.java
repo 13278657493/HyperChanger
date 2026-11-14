@@ -21,7 +21,7 @@ public final class IosNotificationCenterModule extends XposedModule {
         // The presentation bridge is attached only after the shade window is captured.
         // Keep each hook family independent: one OEM class/API mismatch must not prevent
         // the remaining notification-center observers from loading in SystemUI.
-        ClassLoader loader = param.getClassLoader();
+        ClassLoader loader = param.getDefaultClassLoader();
         try {
             IosShadeGestureHooks.install(loader);
         } catch (Throwable error) {
