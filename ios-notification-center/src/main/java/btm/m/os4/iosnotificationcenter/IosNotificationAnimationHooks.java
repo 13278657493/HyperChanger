@@ -31,7 +31,7 @@ final class IosNotificationAnimationHooks {
             Object injector = Xp.callMethod(row, "getInjector");
             if (!handlesPanel(injector)) return;
             Object ambient = Xp.getObjectField(injector, "ambientState");
-            if (!IosNotificationCenterPresentation.isActive()
+            if (!IosNotificationPresentationBridge.isActive()
                     && !Boolean.TRUE.equals(Xp.getObjectField(ambient, "panelVisible"))) return;
             Object state = Xp.callMethod(row, "getViewState");
             Object stateInjector = Xp.getObjectField(state, "mInjector");
