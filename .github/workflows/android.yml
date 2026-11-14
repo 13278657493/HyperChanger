@@ -1,6 +1,7 @@
 name: HyperChanger - Github Actions Building
 
 'on':
+  workflow_dispatch:
   push:
     branches:
       - main
