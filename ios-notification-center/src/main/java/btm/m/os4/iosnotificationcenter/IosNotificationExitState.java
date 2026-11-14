@@ -39,7 +39,7 @@ final class IosNotificationExitState {
     }
 
     static void rememberFrame(View stack) {
-        if (holding || !IosNotificationCenterPresentation.ownsStack(stack)
+        if (holding || !IosNotificationPresentationBridge.ownsStack(stack)
                 || !(stack instanceof ViewGroup)) return;
         DRAWN.clear();
         ViewGroup group = (ViewGroup) stack;
@@ -70,7 +70,7 @@ final class IosNotificationExitState {
     }
 
     static void apply(View stack) {
-        if (!holding || !IosNotificationCenterPresentation.ownsStack(stack)) return;
+        if (!holding || !IosNotificationPresentationBridge.ownsStack(stack)) return;
         // A weak key can disappear during an OEM update; iterate a stable list.
         for (Map.Entry<View, Card> entry : new ArrayList<>(DRAWN.entrySet())) {
             restore(entry.getKey(), entry.getValue());
@@ -83,7 +83,7 @@ final class IosNotificationExitState {
 
     private static void restore(View view, Card card) {
         if (card == null || view == null || view.getVisibility() == View.GONE
-                || !IosNotificationCenterPresentation.ownsRow(view)) return;
+                || !IosNotificationPresentationBridge.ownsRow(view)) return;
         try {
             // Keep real removals/dismissals under OEM control, even during an exit.
             if (card.expandable && Boolean.TRUE.equals(Xp.callMethod(view, "isRemoved"))) return;
