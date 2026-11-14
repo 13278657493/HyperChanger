@@ -113,3 +113,15 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - `IosShadeGestureHooks.install()` 现在会注册该控制器的 hook。
 
 重要边界：当前没有任何代码调用 `IosShadeBackdropBlur.update(...)`，因此尚未接管具体通知面板，也不会主动改写 OEM 的模糊半径；只有未来 presentation host 明确提供 root 并调用 update 后才会进入控制状态。设备上的隐藏 API、BlurUtils 类和字段仍需实机验证。
+
+
+## 第七阶段：通知行材质 hook 移植（已移植，默认不接管）
+
+新增 `IosShadeMaterial.java`，将通知行/媒体头/分组折叠控件的 MIUI View 材质观察与恢复逻辑移入独立包，并将旧 Xp 引用替换为新模块自己的反射/Hook 工具。
+
+- `install()` 已加入独立 SystemUI hook 初始化流程，注册原生 View 材质 setter 的拦截器。
+- 默认 `active=false`，不会对通知行或系统面板启用材质覆盖。
+- 只有后续 presentation host 调用 `setActive(true, measuredWindow)` 后，才会按通知面板根 View 扫描、应用局部材质；关闭时恢复保存的 OEM 参数。
+- 时钟、媒体头、分组控件注册接口保留，后续接入独立布局时再使用。
+
+注意：此类涉及多组隐藏 MIUI View API，必须先在目标 ROM 验证实际方法/字段和恢复行为；目前只是代码移植及被动 hook 注册，不代表视觉效果已经启用。
