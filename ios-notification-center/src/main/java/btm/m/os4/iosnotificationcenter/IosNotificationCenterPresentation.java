@@ -561,6 +561,28 @@ public final class IosNotificationCenterPresentation {
         if (panel != null && stack == null && view.getRootView() == panel.getRootView()) {
             stack = view;
         }
+        // The notification stack can finish inflating after NotificationShadeWindowView.
+        // If the first expansion arrived in that gap, create() may have failed before the
+        // panel/clock hierarchy existed. Retry once the real stack is available.
+        retryPresentationAfterHierarchyCapture();
+    }
+
+    static void captureHeader(View view) {
+        capturedHeader = view;
+        if (isActive()) {
+            findHeader();
+        } else {
+            retryPresentationAfterHierarchyCapture();
+        }
+    }
+
+    private static void retryPresentationAfterHierarchyCapture() {
+        if (host != null || window == null || progress <= 0f
+                || !IosShadeGestureHooks.controller().isEnabled()) {
+            return;
+        }
+        clockUnavailable = false;
+        update(progress, layoutProgress, true, wallpaperSheet);
     }
 
     static float stackOffset(View view, float nativeStackY) {
@@ -657,11 +679,6 @@ public final class IosNotificationCenterPresentation {
         } catch (Throwable ignored) {
             return false;
         }
-    }
-
-    static void captureHeader(View view) {
-        capturedHeader = view;
-        if (isActive()) findHeader();
     }
 
     private static boolean create() {
