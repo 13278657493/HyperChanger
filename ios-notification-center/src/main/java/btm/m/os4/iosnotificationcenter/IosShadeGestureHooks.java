@@ -20,9 +20,23 @@ public final class IosShadeGestureHooks {
 
         // Install isolated MIUI material and blur observers. Presentation applies its own
         // visual layers only after the native notification root has been captured.
-        IosShadeBackdropBlur.install(loader);
-        IosShadeMaterial.install();
-        IosShadeClearGesture.install(Xp.api(), loader);
+        // These enhancements are optional on a ROM-by-ROM basis. A missing OEM
+        // class or hidden API must not prevent the core shade observers from installing.
+        try {
+            IosShadeBackdropBlur.install(loader);
+        } catch (Throwable error) {
+            Xp.log("[IOSNotificationCenter] backdrop blur observer unavailable: " + error);
+        }
+        try {
+            IosShadeMaterial.install();
+        } catch (Throwable error) {
+            Xp.log("[IOSNotificationCenter] material observer unavailable: " + error);
+        }
+        try {
+            IosShadeClearGesture.install(Xp.api(), loader);
+        } catch (Throwable error) {
+            Xp.log("[IOSNotificationCenter] clear gesture observer unavailable: " + error);
+        }
 
         try {
             Class<?> expand = Xp.findClass(
