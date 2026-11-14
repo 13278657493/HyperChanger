@@ -282,3 +282,9 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - Expansion, panel-switch, and panel-ownership observer groups report independent installation outcomes.
 - The feature becomes active only if at least one core native state observer was registered; otherwise presentation updates remain gated and the native UI is restored instead of being claimed by an inert controller.
 - A consolidated status log records which observer groups installed. Optional blur/material/clear hooks do not count as core state sources.
+
+## Notification animation hook isolation
+
+- Notification entry/exit animation observers are initialized independently inside the stack-hook family.
+- If an OEM animation class or method changes and animation hook setup fails, the core stack layout, clipping, scroll-range, and positioning observers can still initialize.
+- The failure is logged as an optional animation-hook degradation rather than aborting the entire stack family.
