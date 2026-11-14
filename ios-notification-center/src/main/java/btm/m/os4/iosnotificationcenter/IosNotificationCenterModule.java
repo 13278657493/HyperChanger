@@ -5,8 +5,8 @@ import io.github.libxposed.api.XposedModule;
 /**
  * Standalone libxposed entry point.
  *
- * Notification hooks are isolated in this module. Presentation ownership remains dormant until
- * an independent host attaches to IosNotificationPresentationBridge.
+ * Notification hooks and the independent presentation host are isolated in this module.
+ * The host attaches only while the native SystemUI shade window is alive.
  */
 public final class IosNotificationCenterModule extends XposedModule {
     @Override
@@ -17,8 +17,8 @@ public final class IosNotificationCenterModule extends XposedModule {
 
         Xp.attach(this);
 
-        // Observe native shade state and install isolated row lifecycle hooks. The presentation
-        // bridge remains detached, so OEM notification rendering is still left untouched.
+        // Observe native shade state, notification rows, and the native window lifecycle.
+        // The presentation bridge is attached only after the shade window is captured.
         IosShadeGestureHooks.install(param.getClassLoader());
         IosNotificationStackHooks.install(param.getClassLoader());
         IosNotificationPresentationHooks.install(param.getClassLoader());
