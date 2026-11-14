@@ -142,3 +142,17 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - 清空动作优先调用实时通知列表的原生 clear API，只有首选路径不可用时才回退到原生 listener/button，避免重复清空。
 
 这两个文件已改为独立包，不依赖旧 ShadeLayer、旧 Main 或 hypermusiccover。清空按钮的具体布局和绑定点待独立 presentation 层接入。
+
+
+## 第九阶段：壁纸显露与边缘光学组件（已独立移植）
+
+新增独立组件：
+
+- `IosShadeWallpaper.java`：创建自有预览 Bitmap，不裁切或回收系统原始 Bitmap。
+- `IosShadeRevealState.java`：壁纸显露状态机。
+- `IosShadeBackdropCapture.java`：异步采集屏幕边缘光学采样帧；排除通知栏/状态栏/导航栏等图层，不申请绕过安全或受保护内容策略。
+- `IosShadeLiquidLens.java`：基于 RuntimeShader、RenderNode 的边缘液态折射渲染。
+- `IosShadeGlassView.java`：组合 MIUI 原生玻璃、边缘折射和降级高光。
+- `IosShadeWallpaperReveal.java`：壁纸透明度/模糊动画。原先对旧 Presentation 的静态调用已替换为窄接口 `Listener.onWallpaperReveal(alpha, blurRadius)`，可由独立 presentation host 实现。
+
+这些类现在位于独立包，不引用旧 Presentation、ShadeLayer、Main 或 hypermusiccover。动画和玻璃 View 尚未加入通知面板层级；独立宿主后续需要创建 ImageView/玻璃 View、提供窗口根 View，并实现 Listener 回调。
