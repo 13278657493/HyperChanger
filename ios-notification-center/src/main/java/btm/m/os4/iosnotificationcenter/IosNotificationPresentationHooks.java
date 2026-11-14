@@ -1,0 +1,60 @@
+package btm.m.os4.iosnotificationcenter;
+
+import android.view.View;
+import android.view.ViewGroup;
+
+/** Captures the native SystemUI window and notification stack for the independent host. */
+public final class IosNotificationPresentationHooks {
+    private static boolean installed;
+    private IosNotificationPresentationHooks() {}
+
+    public static void install(ClassLoader loader) {
+        if (installed) return;
+        try {
+            Class<?> window = Xp.findClass(
+                    "com.android.systemui.shade.NotificationShadeWindowView", loader);
+            io.github.libxposed.api.XposedInterface.Hooker attach = chain -> {
+                Object result = chain.proceed();
+                Object self = chain.getThisObject();
+                if (self instanceof ViewGroup) {
+                    IosNotificationCenterPresentation.attach((ViewGroup) self);
+                }
+                return result;
+            };
+            Xp.hookAll(window, "onFinishInflate", attach);
+            Xp.hookAll(window, "onAttachedToWindow", attach);
+            Xp.log("[IOSNotificationCenter] notification window capture installed");
+        } catch (Throwable error) {
+            Xp.log("[IOSNotificationCenter] notification window capture unavailable: " + error);
+        }
+        try {
+            Class<?> stack = Xp.findClass(
+                    "com.android.systemui.statusbar.notification.stack.NotificationStackScrollLayout",
+                    loader);
+            io.github.libxposed.api.XposedInterface.Hooker capture = chain -> {
+                Object result = chain.proceed();
+                if (chain.getThisObject() instanceof View) {
+                    IosNotificationCenterPresentation.captureStack((View) chain.getThisObject());
+                }
+                return result;
+            };
+            Xp.hookAll(stack, "onAttachedToWindow", capture);
+            Xp.hookAll(stack, "onFinishInflate", capture);
+        } catch (Throwable error) {
+            Xp.log("[IOSNotificationCenter] notification stack capture unavailable: " + error);
+        }
+        try {
+            Class<?> header = Xp.findClass("com.android.systemui.qs.MiuiNotificationHeaderView", loader);
+            Xp.hookAll(header, "onFinishInflate", chain -> {
+                Object result = chain.proceed();
+                if (chain.getThisObject() instanceof View) {
+                    IosNotificationCenterPresentation.captureHeader((View) chain.getThisObject());
+                }
+                return result;
+            });
+        } catch (Throwable error) {
+            Xp.log("[IOSNotificationCenter] notification header capture unavailable: " + error);
+        }
+        installed = true;
+    }
+}
