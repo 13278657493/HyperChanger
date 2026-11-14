@@ -83,9 +83,10 @@ final class IosNotificationExitState {
     }
 
     private static void restore(View view, Card card) {
-        if (card == null || view == null || view.getVisibility() == View.GONE
-                || card.ownerRow.get() == null
-                || !IosNotificationPresentationBridge.ownsRow(card.ownerRow.get())) return;
+        if (card == null || view == null || view.getVisibility() == View.GONE) return;
+        // Resolve the weak owner once so it cannot disappear between validation steps.
+        View ownerRow = card.ownerRow.get();
+        if (ownerRow == null || !IosNotificationPresentationBridge.ownsRow(ownerRow)) return;
         try {
             // Keep real removals/dismissals under OEM control, even during an exit.
             if (card.expandable && Boolean.TRUE.equals(Xp.callMethod(view, "isRemoved"))) return;
