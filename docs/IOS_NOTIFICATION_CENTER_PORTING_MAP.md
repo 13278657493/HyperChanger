@@ -101,3 +101,15 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - Host 不自行猜测通知面板的位置和尺寸；必须由后续适配层提供测量后的 bounds。
 - 该组件尚未接入通知面板布局，也没有启用视觉接管；当前只是独立视觉基元。
 - MIUI 原生材质方法和参数需要在小米 17 Pro Max 目标 ROM 上验证，不能据此认定模糊效果已经生效。
+
+
+## 第六阶段：独立背景模糊控制器（已移植，默认被动）
+
+新增 `IosShadeBackdropBlur.java`，从原通知中心模糊控制逻辑中拆出，并改用独立包内的 `Xp`：
+
+- 观察 MIUI `View.setMiBackgroundBlurRadius(int)` 请求，并保存 OEM 原始半径。
+- 观察 SystemUI `BlurUtils.applyBlur(ViewRootImpl, int)`，记录窗口模糊目标与实际应用半径。
+- 提供手势进度、壁纸显露透明度、当前模糊半径和释放/恢复接口。
+- `IosShadeGestureHooks.install()` 现在会注册该控制器的 hook。
+
+重要边界：当前没有任何代码调用 `IosShadeBackdropBlur.update(...)`，因此尚未接管具体通知面板，也不会主动改写 OEM 的模糊半径；只有未来 presentation host 明确提供 root 并调用 update 后才会进入控制状态。设备上的隐藏 API、BlurUtils 类和字段仍需实机验证。
