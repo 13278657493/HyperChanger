@@ -3,11 +3,10 @@ package btm.m.os4.iosnotificationcenter;
 import java.util.List;
 
 /**
- * Minimal notification-only SystemUI gesture bridge.
+ * Notification-only SystemUI gesture bridge.
  *
- * This first extraction observes native shade expansion and panel ownership without changing
- * OEM visibility, animation, touch, or rendering behavior. Visual takeover remains disabled
- * until the standalone presentation layer is ported.
+ * Observes native shade expansion and panel ownership, then drives the independent presentation.
+ * The OEM stack is only claimed after the standalone presentation captures its native root.
  */
 public final class IosShadeGestureHooks {
     private static final IosShadeController CONTROLLER = new IosShadeController();
@@ -19,8 +18,8 @@ public final class IosShadeGestureHooks {
         if (installed) return;
         CONTROLLER.setEnabled(true);
 
-        // Install the isolated MIUI blur observer/controller. It remains passive until a
-        // future presentation host explicitly claims a measured notification root.
+        // Install isolated MIUI material and blur observers. Presentation applies its own
+        // visual layers only after the native notification root has been captured.
         IosShadeBackdropBlur.install(loader);
         IosShadeMaterial.install();
         IosShadeClearGesture.install(Xp.api(), loader);
