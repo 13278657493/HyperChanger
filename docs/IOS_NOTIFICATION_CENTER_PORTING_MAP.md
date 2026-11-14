@@ -156,3 +156,23 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - `IosShadeWallpaperReveal.java`：壁纸透明度/模糊动画。原先对旧 Presentation 的静态调用已替换为窄接口 `Listener.onWallpaperReveal(alpha, blurRadius)`，可由独立 presentation host 实现。
 
 这些类现在位于独立包，不引用旧 Presentation、ShadeLayer、Main 或 hypermusiccover。动画和玻璃 View 尚未加入通知面板层级；独立宿主后续需要创建 ImageView/玻璃 View、提供窗口根 View，并实现 Listener 回调。
+
+
+## 第十阶段：通知列表与行生命周期 hook（已独立移植）
+
+新增：
+
+- `IosNotificationStackHooks.java`：通知堆栈布局、滚动范围、分组/媒体/焦点通知堆叠处理、视口裁切与绘制观察。
+- `IosNotificationEntryState.java`：通知行进入、位置 settle、绘制帧同步状态。
+- `IosNotificationExitState.java`：通知行退出动画、卡片状态保持与恢复。
+- `IosNotificationAnimationHooks.java`：通知行位置和 OEM 面板动画协调。
+- `IosNotificationPresentationBridge.java`：SystemUI hook 与独立 Presentation 之间的窄接口。
+
+接入与安全边界：
+
+- 独立模块入口已注册通知堆栈 hook。
+- Bridge 初始没有 Host，所有 ownsStack/ownsRow 判断均为 false；在真正的独立 Presentation 注册 Host 前，不接管通知列表、不修改 OEM 行布局。
+- 动画 hook 另加 `Bridge.isActive()` 门槛，避免只因观察到原生手势就抑制 MIUI 原生动画。
+- 四个移植类已清除旧 ShadeLayer、hypermusiccover 和旧 Presentation 引用；后续由独立 Presentation 实现 Bridge.Host 后才会启用自定义布局行为。
+
+这批代码已完成静态引用核对，但尚未执行 Android Gradle 编译。目标 ROM 的方法签名仍需由用户真机验证。
