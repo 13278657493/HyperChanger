@@ -770,6 +770,16 @@ public final class IosNotificationCenterPresentation {
 
     private static void sync() {
         if (host == null || panel == null || progress <= 0f) return;
+
+        // Activate the independent material/blur envelope only after the presentation
+        // owns a real notification host. Both controllers retain the OEM values and
+        // restore them from releasePresentation() when the shade closes or is disabled.
+        if (window != null) {
+            IosShadeMaterial.setActive(true, window);
+            if (clock != null) IosShadeMaterial.registerClock(clock);
+            IosShadeBackdropBlur.update(window, true, progress);
+        }
+
         View sheet = wallpaperSheet;
         if (sheet != null && sheet.isAttachedToWindow()) {
             int[] sheetPoint = SHEET_POINT;
@@ -1821,6 +1831,10 @@ public final class IosNotificationCenterPresentation {
     }
 
     private static void releasePresentation() {
+        // Restore every captured MIUI material and the original window blur before
+        // removing our overlay, including interrupted gestures and feature disable.
+        IosShadeMaterial.setActive(false, null);
+        IosShadeBackdropBlur.release();
         IosNotificationEntryState.clear();
         IosNotificationShortcutHost.restore();
         IosNotificationExitState.clear();
