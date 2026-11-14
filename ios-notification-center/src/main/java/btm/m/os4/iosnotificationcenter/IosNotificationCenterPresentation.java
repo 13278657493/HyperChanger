@@ -1915,6 +1915,15 @@ public final class IosNotificationCenterPresentation {
         lastNotificationAnimation = null;
         clockNotificationFailureLogged = false;
         lastDepthDrawable = null;
+        // A presentation can be detached midway through the wallpaper reveal. Restore the
+        // foreground before dropping its reference, and reset the cached reveal values so a
+        // newly-created host never inherits the previous gesture's alpha or blur.
+        if (depth != null) {
+            depth.setAlpha(1f);
+            depth.setRenderEffect(null);
+        }
+        wallpaperReveal = 1f;
+        wallpaperRevealBlur = 0;
         if (host != null && host.getParent() instanceof ViewGroup) {
             ((ViewGroup) host.getParent()).removeView(host);
         }
