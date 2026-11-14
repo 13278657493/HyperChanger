@@ -27,10 +27,21 @@ jobs:
           distribution: temurin
           cache: gradle
 
-      - name: Set up Android SDK
+      - name: Install Android NDK r30
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platform-tools'
+          packages: 'ndk;30.0.16248370'
+
+      - name: Configure project NDK path
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          NDK_DIR="$SDK_ROOT/ndk/30.0.16248370"
+          test -f "$NDK_DIR/source.properties"
+          mkdir -p .build-tmp
+          ln -s "$NDK_DIR" .build-tmp/android-ndk-r30
+          test -f .build-tmp/android-ndk-r30/source.properties
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
