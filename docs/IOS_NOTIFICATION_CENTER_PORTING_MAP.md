@@ -288,3 +288,10 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - Notification entry/exit animation observers are initialized independently inside the stack-hook family.
 - If an OEM animation class or method changes and animation hook setup fails, the core stack layout, clipping, scroll-range, and positioning observers can still initialize.
 - The failure is logged as an optional animation-hook degradation rather than aborting the entire stack family.
+
+
+## Notification exit background ownership
+
+- Exit-frame snapshots now retain the owning notification row alongside each captured view. This lets the exit holder restore the row's normal background view even when that background is not itself classified as an expandable notification row by the bridge.
+- Restoration remains gated by the owning row still belonging to the active presentation, so detached/recycled rows are not written back into a newly-owned stack.
+- This fixes the mismatch between capturing background views and the previous restore-time `ownsRow(background)` check. ROM-specific drawing behavior still requires device verification.
