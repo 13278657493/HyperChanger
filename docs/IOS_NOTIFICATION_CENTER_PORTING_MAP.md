@@ -257,3 +257,9 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 
 - Releasing a presentation during an interrupted wallpaper reveal restores the hosted foreground image alpha and clears its render effect before dropping the view reference.
 - The cached reveal alpha/blur are reset to the neutral state (`1f` / `0`), preventing a newly-created presentation from inheriting stale values from the previous gesture.
+
+## Reusable glass view teardown
+
+- `IosShadeGlassView.reset()` now stops the optical sampler, releases any remaining native material state, and clears the previous root, sheet offset, corner radius, and clip dimensions.
+- The glass and its backdrop return to alpha 1 before being hidden, so a later attachment cannot inherit a partially faded state from a previous wallpaper gesture.
+- This is lifecycle hardening only; it does not mount a glass overlay or claim that the target ROM's optical APIs have been verified.
