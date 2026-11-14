@@ -28,11 +28,11 @@ public final class IosShadeGestureHooks {
                 if (args.size() == 4 && CONTROLLER.isEnabled()) {
                     Object tracking = Xp.callMethod(chain.getThisObject(), "getTracking");
                     boolean dragging = Boolean.TRUE.equals(Xp.callMethod(tracking, "getValue"));
-                    Object root = Xp.callMethod(chain.getThisObject(), "getView");
-                    float panelHeight = root instanceof android.view.View
-                            ? ((android.view.View) root).getHeight() : 0f;
+                    // The standalone observer does not own a shade root yet; let the
+                    // state machine fall back to the native threshold until presentation
+                    // attaches its measured panel height.
                     CONTROLLER.onRawExpansion(((Number) args.get(0)).floatValue(),
-                            ((Number) args.get(1)).floatValue(), panelHeight, dragging);
+                            ((Number) args.get(1)).floatValue(), 0f, dragging);
                 }
                 return result;
             });
