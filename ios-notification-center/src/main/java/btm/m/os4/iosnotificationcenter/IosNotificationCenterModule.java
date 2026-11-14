@@ -15,6 +15,8 @@ public final class IosNotificationCenterModule extends XposedModule {
             return;
         }
 
+        Xp.attach(this);
+
         // Scaffold checkpoint: keep SystemUI untouched until the notification-only runtime
         // and controller have been extracted and verified.
     }
