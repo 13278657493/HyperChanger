@@ -176,3 +176,23 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - 四个移植类已清除旧 ShadeLayer、hypermusiccover 和旧 Presentation 引用；后续由独立 Presentation 实现 Bridge.Host 后才会启用自定义布局行为。
 
 这批代码已完成静态引用核对，但尚未执行 Android Gradle 编译。目标 ROM 的方法签名仍需由用户真机验证。
+
+
+## 第十一阶段：独立 Presentation 主体与 SystemUI 生命周期接入
+
+新增并接入：
+
+- `IosNotificationCenterPresentation.java`：移植原通知中心 Presentation 主体，包含第二时钟容器、通知面板宿主、通知堆栈定位、壁纸/景深层、顶部区域、清空按钮同步与快捷操作同步。
+- `IosNotificationPresentationHooks.java`：捕获 `NotificationShadeWindowView`、通知堆栈和 MIUI 通知头的生命周期。
+- `IosNotificationPresentationBridge.java`：由 Presentation 实现 Host，向通知堆栈/行生命周期 hook 提供视口、归属、偏移、透明度等数据。
+- `IosNotificationShortcutHost.java` 与 `IosNotificationShortcutLaunch.java`：快捷操作宿主与启动清理逻辑独立迁移。
+- `IosShadeGestureHooks.java`：将原生展开高度、控制中心切换和通知面板归属回调同步到独立 Presentation。
+
+重要保护：
+
+- Presentation 现在完全位于独立包，不再引用旧 ShadeLayer、Main 或 hypermusiccover。
+- Bridge 仅在 Presentation 捕获到系统通知窗口并 attach 后才接入 Host；没有宿主时通知行 hook 不会认领 OEM View。
+- 入口仍只加载 `com.android.systemui`。
+- 当前 Presentation 创建路径仍依赖 MIUI SystemUI 内部 View/资源 ID 和锁屏时钟组件；实际 ROM 兼容性由用户真机验证。
+
+本阶段完成代码接线和静态旧包引用检查；尚未执行 Gradle 构建，不能据此认定 APK 已可安装。
