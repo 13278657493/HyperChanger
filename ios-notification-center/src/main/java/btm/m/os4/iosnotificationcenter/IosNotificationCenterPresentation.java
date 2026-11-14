@@ -159,9 +159,27 @@ public final class IosNotificationCenterPresentation {
     private static float notificationClearSoftLuminance = .14f;
     private static int notificationClearSoftRefraction;
 
+    private static final IosNotificationPresentationBridge.Host BRIDGE_HOST =
+            new IosNotificationPresentationBridge.Host() {
+        @Override public boolean isActive() { return IosNotificationCenterPresentation.isActive(); }
+        @Override public boolean ownsStack(View view) { return IosNotificationCenterPresentation.ownsStack(view); }
+        @Override public boolean ownsRow(View view) { return IosNotificationCenterPresentation.ownsRow(view); }
+        @Override public float viewportBottom(View view) { return IosNotificationCenterPresentation.viewportBottom(view); }
+        @Override public float viewportBottomForDraw(View view) { return IosNotificationCenterPresentation.viewportBottomForDraw(view); }
+        @Override public float stackOffset(View view, float y) { return IosNotificationCenterPresentation.stackOffset(view, y); }
+        @Override public int landscapeStackWidth(View view) { return IosNotificationCenterPresentation.landscapeStackWidth(view); }
+        @Override public int extraScrollRange(View view) { return IosNotificationCenterPresentation.extraScrollRange(view); }
+        @Override public float panelStackAlpha(View view, float alpha) { return IosNotificationCenterPresentation.panelStackAlpha(view, alpha); }
+        @Override public void syncShortcuts() { IosNotificationCenterPresentation.syncShortcuts(); }
+        @Override public boolean isKeyguardLocked() {
+            return Boolean.TRUE.equals(keyguardLockedOverride);
+        }
+    };
+
     private IosNotificationCenterPresentation() {}
 
     public static void attach(ViewGroup root) {
+        IosNotificationPresentationBridge.attach(BRIDGE_HOST);
         if (window == root) {
             syncClearButton();
             return;
@@ -236,6 +254,7 @@ public final class IosNotificationCenterPresentation {
     }
 
     public static void release() {
+        IosNotificationPresentationBridge.detach(BRIDGE_HOST);
         switching = false;
         gestureActive = false;
         if (headerExitAnimator != null) headerExitAnimator.cancel();
