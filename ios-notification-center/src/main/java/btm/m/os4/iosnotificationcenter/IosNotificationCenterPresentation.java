@@ -499,9 +499,26 @@ public final class IosNotificationCenterPresentation {
     static void onKeyguardStateChanged(boolean locked) {
         if (keyguardLockedOverride != null && keyguardLockedOverride == locked) return;
         keyguardLockedOverride = locked;
-        if (locked) IosNotificationShortcutHost.restore();
+
+        // Do not leave lock-screen shortcut views attached after the keyguard appears.
+        // On unlock, immediately re-evaluate eligibility instead of waiting for the next
+        // shade gesture or stack layout callback.
+        if (locked) {
+            IosNotificationShortcutHost.restore();
+        } else if (host != null && panel != null) {
+            syncShortcuts();
+        }
+
         clearButtonScanNeeded = true;
         syncClearButton();
+        if (panel != null && panel.isAttachedToWindow()) {
+            panel.post(() -> {
+                if (panel == null || !panel.isAttachedToWindow()) return;
+                clearButtonScanNeeded = true;
+                syncClearButton();
+                if (!locked) syncShortcuts();
+            });
+        }
     }
 
     private static void captureNativeClearAction(View view) {
