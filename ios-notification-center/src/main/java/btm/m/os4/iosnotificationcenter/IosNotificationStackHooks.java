@@ -426,7 +426,14 @@ final class IosNotificationStackHooks {
     }
 
     static void install(ClassLoader loader) {
-        IosNotificationAnimationHooks.install(loader);
+        // Entry/exit animation observers are a supporting family, not a prerequisite for
+        // stack layout and clipping. A ROM-specific failure there must not skip the core
+        // notification stack hooks below.
+        try {
+            IosNotificationAnimationHooks.install(loader);
+        } catch (Throwable error) {
+            Xp.log("[IOSNotificationCenter] notification animation hooks unavailable: " + error);
+        }
         // EMPTY neutralizes translation, shrink, clipping and dimming. Intercept the final
         // application as well as the calculator: group/transition paths can reuse old results.
         try {
