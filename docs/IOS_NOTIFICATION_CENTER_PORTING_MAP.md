@@ -229,3 +229,10 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - Presentation teardown and feature-disable paths now restore captured MIUI material properties and the original backdrop blur before removing the overlay.
 - These APIs are gated behind a successfully created presentation host; merely loading the LSPosed module does not activate the material override.
 - This is source-level integration only. The Xiaomi 17 Pro Max ROM's hidden MIUI blur/material APIs still require build and device verification.
+
+
+## Keyguard transition handling
+
+- Keyguard state changes now immediately restore notification shortcuts when the device locks and re-evaluate shortcut eligibility when it unlocks.
+- A posted panel-thread refresh rechecks clear-button discovery and shortcut attachment after the SystemUI keyguard transition settles; it validates the panel is still attached before touching views.
+- This avoids leaving stale shortcut views hidden or attached across lock/unlock without changing native clear-button eligibility.
