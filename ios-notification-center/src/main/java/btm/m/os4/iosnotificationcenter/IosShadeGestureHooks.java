@@ -37,8 +37,10 @@ public final class IosShadeGestureHooks {
                     // The standalone observer does not own a shade root yet; let the
                     // state machine fall back to the native threshold until presentation
                     // attaches its measured panel height.
-                    CONTROLLER.onRawExpansion(((Number) args.get(0)).floatValue(),
+                    float target = CONTROLLER.onRawExpansion(((Number) args.get(0)).floatValue(),
                             ((Number) args.get(1)).floatValue(), 0f, dragging);
+                    CONTROLLER.setProgress(target);
+                    IosNotificationCenterPresentation.update(target, target, true, null);
                 }
                 return result;
             });
@@ -54,9 +56,12 @@ public final class IosShadeGestureHooks {
                 Object result = chain.proceed();
                 Object controller = chain.getThisObject();
                 Object animator = Xp.getObjectField(controller, "progressAnimator");
+                boolean inSwitch = Boolean.TRUE.equals(Xp.getObjectField(controller, "switching"));
                 CONTROLLER.onSwitchProgress(
-                        ((Number) Xp.getObjectField(animator, "_progress")).floatValue(),
-                        Boolean.TRUE.equals(Xp.getObjectField(controller, "switching")));
+                        ((Number) Xp.getObjectField(animator, "_progress")).floatValue(), inSwitch);
+                IosNotificationCenterPresentation.setSwitching(inSwitch);
+                IosNotificationCenterPresentation.update(CONTROLLER.progress(),
+                        CONTROLLER.progress(), true, null);
                 return result;
             };
             Xp.hookAll(switcher, "performProgressChanged", switchProgress);
@@ -71,14 +76,16 @@ public final class IosShadeGestureHooks {
                     "com.android.systemui.shade.NotificationPanelViewControllerInjector", loader);
             Xp.hookAll(injector, "onControlCenterAppearChanged", chain -> {
                 Object result = chain.proceed();
-                CONTROLLER.onControlCenterAppearance(
-                        Boolean.TRUE.equals(chain.getArgs().get(0)));
+                CONTROLLER.onControlCenterAppearance(Boolean.TRUE.equals(chain.getArgs().get(0)));
+                IosNotificationCenterPresentation.update(CONTROLLER.progress(),
+                        CONTROLLER.progress(), true, null);
                 return result;
             });
             Xp.hookAll(injector, "onNotificationAppearChanged", chain -> {
                 Object result = chain.proceed();
-                CONTROLLER.onNotificationAppearance(
-                        Boolean.TRUE.equals(chain.getArgs().get(0)));
+                CONTROLLER.onNotificationAppearance(Boolean.TRUE.equals(chain.getArgs().get(0)));
+                IosNotificationCenterPresentation.update(CONTROLLER.progress(),
+                        CONTROLLER.progress(), true, null);
                 return result;
             });
             Xp.log("[IOSNotificationCenter] panel ownership observers installed");
