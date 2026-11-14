@@ -4,6 +4,9 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.List;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
 
 
 
@@ -107,11 +110,15 @@ final class IosNotificationEntryState {
     private static void visitStack(View stack, boolean draw) {
         if (!(stack instanceof ViewGroup)) return;
         ViewGroup group = (ViewGroup) stack;
-        for (int i = 0; i < group.getChildCount(); i++) visitRow(group.getChildAt(i), draw);
+        Set<View> visited = Collections.newSetFromMap(new IdentityHashMap<View, Boolean>());
+        for (int i = 0; i < group.getChildCount(); i++) {
+            visitRow(group.getChildAt(i), draw, visited);
+        }
     }
 
-    private static void visitRow(View row, boolean draw) {
-        if (!IosNotificationStackHooks.isNotificationRow(row)
+    private static void visitRow(View row, boolean draw, Set<View> visited) {
+        if (row == null || !visited.add(row)
+                || !IosNotificationStackHooks.isNotificationRow(row)
                 || !IosNotificationPresentationBridge.ownsRow(row)) return;
         try {
             Object state = Xp.callMethod(row, "getViewState");
@@ -134,7 +141,7 @@ final class IosNotificationEntryState {
         try {
             Object children = Xp.callMethod(row, "getAttachedChildren");
             if (children instanceof List<?>) for (Object child : (List<?>) children)
-                if (child instanceof View) visitRow((View) child, draw);
+                if (child instanceof View) visitRow((View) child, draw, visited);
         } catch (Throwable ignored) {}
     }
 
