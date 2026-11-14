@@ -236,3 +236,10 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - Keyguard state changes now immediately restore notification shortcuts when the device locks and re-evaluate shortcut eligibility when it unlocks.
 - A posted panel-thread refresh rechecks clear-button discovery and shortcut attachment after the SystemUI keyguard transition settles; it validates the panel is still attached before touching views.
 - This avoids leaving stale shortcut views hidden or attached across lock/unlock without changing native clear-button eligibility.
+
+
+## Hosted clock sampling restoration
+
+- The OEM KeyguardClockContainer is no longer modified by an early untracked containment setter during presentation creation.
+- IosShadeMaterial now disables clock wallpaper containment only when both setter and getter are available, snapshots the original value first, and restores it with the other captured material properties during teardown.
+- On builds exposing the setter without a getter, the controller deliberately leaves the clock's native containment unchanged rather than risk a persistent SystemUI modification.
