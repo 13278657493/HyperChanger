@@ -4,9 +4,11 @@ name: HyperChanger - Github Actions Building
   push:
     branches:
       - main
+      - adapt/xiaomi-17-pro-max
   pull_request:
     branches:
       - main
+      - adapt/xiaomi-17-pro-max
 
 jobs:
   build:
