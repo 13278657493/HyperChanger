@@ -23,7 +23,14 @@ public final class IosNotificationPresentationHooks {
             };
             Xp.hookAll(window, "onFinishInflate", attach);
             Xp.hookAll(window, "onAttachedToWindow", attach);
-            Xp.hookAll(window, "onDetachedFromWindow", chain -> {
+            Xp.log("[IOSNotificationCenter] notification window capture installed");
+        } catch (Throwable error) {
+            Xp.log("[IOSNotificationCenter] notification window capture unavailable: " + error);
+        }
+        try {
+            Class<?> window = Xp.findClass(
+                    "com.android.systemui.shade.NotificationShadeWindowView", loader);
+            Xp.hook(Xp.findMethodExact(window, "onDetachedFromWindow"), chain -> {
                 Object self = chain.getThisObject();
                 Object result = chain.proceed();
                 if (self instanceof ViewGroup) {
@@ -31,9 +38,8 @@ public final class IosNotificationPresentationHooks {
                 }
                 return result;
             });
-            Xp.log("[IOSNotificationCenter] notification window capture installed");
         } catch (Throwable error) {
-            Xp.log("[IOSNotificationCenter] notification window capture unavailable: " + error);
+            Xp.log("[IOSNotificationCenter] notification window detach observer unavailable: " + error);
         }
         try {
             Class<?> stack = Xp.findClass(
