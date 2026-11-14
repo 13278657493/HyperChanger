@@ -295,3 +295,9 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - Exit-frame snapshots now retain the owning notification row alongside each captured view. This lets the exit holder restore the row's normal background view even when that background is not itself classified as an expandable notification row by the bridge.
 - Restoration remains gated by the owning row still belonging to the active presentation, so detached/recycled rows are not written back into a newly-owned stack.
 - This fixes the mismatch between capturing background views and the previous restore-time `ownsRow(background)` check. ROM-specific drawing behavior still requires device verification.
+
+
+## Weak snapshot reference safety
+
+- The exit snapshot map uses weak View keys. Snapshot values now keep the owning notification row through `WeakReference` as well, avoiding a value-to-key strong-reference cycle that could defeat WeakHashMap collection for notification-row entries.
+- Restore skips snapshots whose owner row has already been collected or no longer belongs to the active presentation. Background snapshots still validate against their owning row.
