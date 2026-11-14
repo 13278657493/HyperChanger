@@ -186,20 +186,18 @@ public final class IosShadeMaterial {
     }
 
     private static void scanClock(View view) {
-        if (METHODS[4] != null && !SAVED.containsKey(view)) {
+        if (METHODS[4] != null && READERS[4] != null && !SAVED.containsKey(view)) {
             Object[] saved = new Object[SETTERS.length];
             try {
-                if (READERS[4] != null) saved[4] = !(Boolean) READERS[4].invoke(view);
-                if (saved[4] != null) {
-                    SAVED.put(view, saved);
-                }
-                // The hosted clock is an explicitly owned sampling surface. Some HyperOS
-                // builds expose the setter but no readable containment getter; still reapply
-                // the wallpaper boundary on a rapid reopen, where the existing clock is reused
-                // and create() does not get a chance to call allowBackdropSampling().
+                // A setter without a matching getter is not safe to override: the original
+                // containment value cannot be reconstructed when the shade closes. Capture
+                // the inverse getter value before disabling containment for the hosted clock.
+                saved[4] = !(Boolean) READERS[4].invoke(view);
+                SAVED.put(view, saved);
                 WRITING.set(true);
                 METHODS[4].invoke(view, false);
             } catch (Throwable ignored) {
+                SAVED.remove(view);
             } finally {
                 WRITING.remove();
             }
