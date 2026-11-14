@@ -50,7 +50,7 @@ final class IosNotificationEntryState {
 
     private static boolean ownsEntry(View stack) {
         return yAnimatorTag != 0 && entering && !IosNotificationExitState.isHolding()
-                && IosNotificationCenterPresentation.ownsStack(stack);
+                && IosNotificationPresentationBridge.ownsStack(stack);
     }
 
     static void targetsReady(View stack) {
@@ -73,7 +73,7 @@ final class IosNotificationEntryState {
 
     static boolean settle(View row, Object state) {
         if (preparedStack == null || !ownsEntry(preparedStack)
-                || !IosNotificationCenterPresentation.ownsRow(row)
+                || !IosNotificationPresentationBridge.ownsRow(row)
                 || !IosNotificationStackHooks.isNotificationRow(row)
                 || row.getVisibility() == View.GONE) return false;
         try {
@@ -112,7 +112,7 @@ final class IosNotificationEntryState {
 
     private static void visitRow(View row, boolean draw) {
         if (!IosNotificationStackHooks.isNotificationRow(row)
-                || !IosNotificationCenterPresentation.ownsRow(row)) return;
+                || !IosNotificationPresentationBridge.ownsRow(row)) return;
         try {
             Object state = Xp.callMethod(row, "getViewState");
             if (!eligible(row, state)) return;
