@@ -251,3 +251,9 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - The independent notification host and stack integration can still attach, while the native SystemUI header remains visible as the date/status fallback.
 - Clock-specific synchronization is skipped when no hosted clock exists; landscape layout does not reserve an empty clock column.
 - When a compatible clock is available, the existing hosted-clock path and material registration remain unchanged.
+
+
+## Wallpaper reveal teardown
+
+- Releasing a presentation during an interrupted wallpaper reveal restores the hosted foreground image alpha and clears its render effect before dropping the view reference.
+- The cached reveal alpha/blur are reset to the neutral state (`1f` / `0`), preventing a newly-created presentation from inheriting stale values from the previous gesture.
