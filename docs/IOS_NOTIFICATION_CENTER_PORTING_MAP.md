@@ -221,3 +221,11 @@ The existing Android GitHub Actions workflow now uploads a separate iOS-Notifica
 - `IosNotificationCenterPresentation.captureStack()` and `captureHeader()` now retry presentation creation when the notification hierarchy becomes available after the shade window. This addresses the ordering case where the first expansion arrives before the panel/clock subtree has finished inflating.
 - Retry is gated by an attached shade window, positive notification progress, an enabled standalone controller, and the absence of an existing host. It does not force OEM UI ownership before a host exists.
 - GitHub Actions currently reports no workflow runs for `adapt/xiaomi-17-pro-max`; compilation and APK packaging remain unverified.
+
+
+## Material and backdrop integration
+
+- The active presentation's pre-draw synchronization now enables IosShadeMaterial against the captured shade window, registers the hosted keyguard clock, and drives IosShadeBackdropBlur with the current notification expansion progress.
+- Presentation teardown and feature-disable paths now restore captured MIUI material properties and the original backdrop blur before removing the overlay.
+- These APIs are gated behind a successfully created presentation host; merely loading the LSPosed module does not activate the material override.
+- This is source-level integration only. The Xiaomi 17 Pro Max ROM's hidden MIUI blur/material APIs still require build and device verification.
