@@ -19,6 +19,10 @@ public final class IosShadeGestureHooks {
         if (installed) return;
         CONTROLLER.setEnabled(true);
 
+        // Install the isolated MIUI blur observer/controller. It remains passive until a
+        // future presentation host explicitly claims a measured notification root.
+        IosShadeBackdropBlur.install(loader);
+
         try {
             Class<?> expand = Xp.findClass(
                     "com.android.systemui.shade.NotificationPanelExpandController", loader);
