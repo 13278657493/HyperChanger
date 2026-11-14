@@ -1862,6 +1862,14 @@ public final class IosNotificationCenterPresentation {
         return top;
     }
 
+    private static void cleanupStep(String label, Runnable action) {
+        try {
+            action.run();
+        } catch (Throwable error) {
+            Xp.log(TAG + "presentation cleanup step failed (" + label + "): " + error);
+        }
+    }
+
     private static void releasePresentation() {
         // This method is the terminal boundary for a presentation instance (normal close,
         // feature disable, window replacement, or failed host creation). Reset gesture
@@ -1870,40 +1878,39 @@ public final class IosNotificationCenterPresentation {
         layoutProgress = 0f;
         switching = false;
         gestureActive = false;
-        IosShadeMaterial.setActive(false, null);
-        IosShadeBackdropBlur.release();
-        IosNotificationEntryState.clear();
-        IosNotificationShortcutHost.restore();
-        IosNotificationExitState.clear();
-        restoreStackTransform();
-        restoreLandscapeStackLayout();
-        IosNotificationStackHooks.restoreStackedRows();
-        IosNotificationStackHooks.restoreExpandedRows(stack);
-        if (observer != null && observer.isAlive()) observer.removeOnPreDrawListener(FRAME);
+        cleanupStep("restore shade material", () -> IosShadeMaterial.setActive(false, null));
+        cleanupStep("restore backdrop blur", IosShadeBackdropBlur::release);
+        cleanupStep("clear entry state", IosNotificationEntryState::clear);
+        cleanupStep("restore shortcuts", IosNotificationShortcutHost::restore);
+        cleanupStep("clear exit state", IosNotificationExitState::clear);
+        cleanupStep("restore stack transform", IosNotificationCenterPresentation::restoreStackTransform);
+        cleanupStep("restore landscape stack layout", IosNotificationCenterPresentation::restoreLandscapeStackLayout);
+        cleanupStep("restore stacked rows", IosNotificationStackHooks::restoreStackedRows);
+        cleanupStep("restore expanded rows", () -> IosNotificationStackHooks.restoreExpandedRows(stack));
+        cleanupStep("remove presentation frame observer", () -> { if (observer != null && observer.isAlive()) observer.removeOnPreDrawListener(FRAME); });
         observer = null;
-        if (oldHeader != null) {
+        cleanupStep("restore native header views", () -> {
+            if (oldHeader == null) return;
             for (int i = 0; i < oldHeader.length; i++) {
-                if (oldHeader[i] != null) {
-                    oldHeader[i].setAlpha(oldHeaderAlpha[i]);
-                    oldHeader[i].setRenderEffect(null);
-                }
+                final View view = oldHeader[i];
+                if (view == null) continue;
+                final float alpha = oldHeaderAlpha == null || i >= oldHeaderAlpha.length ? 1f : oldHeaderAlpha[i];
+                cleanupStep("restore one native header view", () -> { view.setAlpha(alpha); view.setRenderEffect(null); });
             }
-        }
+        });
         oldHeader = null;
         oldHeaderAlpha = null;
-        if (notificationHeader != null) notificationHeader.setAlpha(notificationHeaderAlpha);
+        cleanupStep("restore notification header alpha", () -> { if (notificationHeader != null) notificationHeader.setAlpha(notificationHeaderAlpha); });
         notificationHeader = null;
-        if (headerGradient != null) headerGradient.setVisibility(headerGradientVisibility);
+        cleanupStep("restore header gradient", () -> { if (headerGradient != null) headerGradient.setVisibility(headerGradientVisibility); });
         headerGradient = null;
-        if (headerForeground != null) headerForeground.setVisibility(headerForegroundVisibility);
+        cleanupStep("restore header foreground", () -> { if (headerForeground != null) headerForeground.setVisibility(headerForegroundVisibility); });
         headerForeground = null;
-        if (headerShadow != null) headerShadow.setVisibility(headerShadowVisibility);
+        cleanupStep("restore header shadow", () -> { if (headerShadow != null) headerShadow.setVisibility(headerShadowVisibility); });
         headerShadow = null;
-        if (emptyText != null) emptyText.setAlpha(emptyTextAlpha);
+        cleanupStep("restore empty text alpha", () -> { if (emptyText != null) emptyText.setAlpha(emptyTextAlpha); });
         emptyText = null;
-        if (clockInfo != null && clockInfoOffset != 0f) {
-            clockInfo.setTranslationY(clockInfoBaseTranslation);
-        }
+        cleanupStep("restore clock info position", () -> { if (clockInfo != null && clockInfoOffset != 0f) clockInfo.setTranslationY(clockInfoBaseTranslation); });
         clockInfo = null;
         clockAnimation = null;
         clockInfoOffset = 0f;
@@ -1923,22 +1930,15 @@ public final class IosNotificationCenterPresentation {
         // A presentation can be detached midway through the wallpaper reveal. Restore the
         // foreground before dropping its reference, and reset the cached reveal values so a
         // newly-created host never inherits the previous gesture's alpha or blur.
-        if (depth != null) {
-            depth.setAlpha(1f);
-            depth.setRenderEffect(null);
-        }
+        cleanupStep("restore wallpaper foreground", () -> { if (depth != null) { depth.setAlpha(1f); depth.setRenderEffect(null); } });
         wallpaperReveal = 1f;
         wallpaperRevealBlur = 0;
-        if (host != null && host.getParent() instanceof ViewGroup) {
-            ((ViewGroup) host.getParent()).removeView(host);
-        }
-        if (status != null && status.getParent() instanceof ViewGroup) {
-            ((ViewGroup) status.getParent()).removeView(status);
-        }
+        cleanupStep("remove presentation host", () -> { if (host != null && host.getParent() instanceof ViewGroup) ((ViewGroup) host.getParent()).removeView(host); });
+        cleanupStep("remove status mirror", () -> { if (status != null && status.getParent() instanceof ViewGroup) ((ViewGroup) status.getParent()).removeView(status); });
         // The clear control belongs to the native controller across panel switches.
         // Leaving this presentation must never reveal it or overwrite its animation.
         clearButton = null;
-        removeNotificationHeader();
+        cleanupStep("remove custom notification header", IosNotificationCenterPresentation::removeNotificationHeader);
         host = null;
         panel = null;
         clock = null;
@@ -1950,7 +1950,7 @@ public final class IosNotificationCenterPresentation {
         lastBlur = -1;
         lastStatusBlur = -1;
         lastHeaderBlur = -1;
-        IosShadeBlurEffects.clear();
+        cleanupStep("clear blur effect cache", IosShadeBlurEffects::clear);
     }
 
     private static void allowBackdropSampling(View view) {
