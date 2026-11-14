@@ -528,23 +528,50 @@ final class IosNotificationStackHooks {
             Xp.hookAll(stack, "dispatchDraw", chain -> {
                 // Android filters INVISIBLE children before drawChild. Clear stale stacking
                 // visibility first, including notifications inside expanded groups.
-                enforceUnstackedRows((View) chain.getThisObject());
                 View view = (View) chain.getThisObject();
-                if (IosNotificationEntryState.deferDraw(view)) {
+                try {
+                    enforceUnstackedRows(view);
+                } catch (Throwable error) {
+                    Xp.log("[IOSNotificationCenter] pre-draw row normalization failed: " + error);
+                }
+                boolean defer = false;
+                try {
+                    defer = IosNotificationEntryState.deferDraw(view);
+                } catch (Throwable error) {
+                    Xp.log("[IOSNotificationCenter] entry draw deferral unavailable: " + error);
+                }
+                if (defer) {
                     // A listener added during pre-draw may run only next traversal. Never
                     // record the old native coordinates as the sheet's first visible frame.
-                    Xp.callMethod(view, "requestChildrenUpdate");
-                    view.invalidate();
+                    try {
+                        Xp.callMethod(view, "requestChildrenUpdate");
+                        view.invalidate();
+                    } catch (Throwable error) {
+                        Xp.log("[IOSNotificationCenter] deferred stack redraw request failed: " + error);
+                    }
                     return null;
                 }
-                IosNotificationExitState.apply(view);
+                try {
+                    IosNotificationExitState.apply(view);
+                } catch (Throwable error) {
+                    Xp.log("[IOSNotificationCenter] exit snapshot restoration failed: " + error);
+                }
                 if (!IosNotificationPresentationBridge.ownsStack(view)
                         || chain.getArgs().isEmpty() || !(chain.getArgs().get(0) instanceof Canvas)) {
                     return chain.proceed();
                 }
-                IosNotificationEntryState.settleForDraw(view);
-                IosNotificationExitState.rememberFrame(view);
-                clipStackedRows(view, true);
+                try {
+                    IosNotificationEntryState.settleForDraw(view);
+                    IosNotificationExitState.rememberFrame(view);
+                } catch (Throwable error) {
+                    Xp.log("[IOSNotificationCenter] notification frame capture failed: " + error);
+                }
+                try {
+                    clipStackedRows(view, true);
+                } catch (Throwable error) {
+                    restoreStackedRows();
+                    Xp.log("[IOSNotificationCenter] stacked row clipping failed: " + error);
+                }
                 Canvas canvas = (Canvas) chain.getArgs().get(0);
                 int save = canvas.save();
                 try (LayoutInputs foregroundBlur = new LayoutInputs(view)) {
@@ -563,8 +590,17 @@ final class IosNotificationStackHooks {
                 // This is the last boundary before Android records the child's RenderNode.
                 // It also covers ROMs which inline the OEM property/calculator methods.
                 if (chain.getArgs().size() >= 2 && chain.getArgs().get(1) instanceof View) {
-                    enforceUnstackedRow((View) chain.getArgs().get(1));
-                    IosNotificationExitState.applyRow((View) chain.getArgs().get(1));
+                    View row = (View) chain.getArgs().get(1);
+                    try {
+                        enforceUnstackedRow(row);
+                    } catch (Throwable error) {
+                        Xp.log("[IOSNotificationCenter] child row normalization failed: " + error);
+                    }
+                    try {
+                        IosNotificationExitState.applyRow(row);
+                    } catch (Throwable error) {
+                        Xp.log("[IOSNotificationCenter] child exit snapshot restoration failed: " + error);
+                    }
                 }
                 if (chain.getThisObject() != maskedStack || chain.getArgs().size() < 2
                         || !(chain.getArgs().get(0) instanceof Canvas)
